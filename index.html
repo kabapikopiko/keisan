@@ -2,12 +2,12 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>たのしい！ゲームメニュー</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>たのしい！さんすう・けいさんゲーム</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%); /* やさしいパステル背景 */
             margin: 0;
             padding: 20px;
             display: flex;
@@ -15,100 +15,135 @@
             align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .menu-container {
             background-color: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 30px;
+            border-radius: 30px;
+            border: 6px solid #badeef; /* まるっこい枠線 */
+            box-shadow: 0 12px 0 #93c5fd, 0 20px 30px rgba(0,0,0,0.1);
+            padding: 30px 20px;
             width: 100%;
-            max-width: 450px;
+            max-width: 400px;
             text-align: center;
         }
 
         h1 {
-            color: #2c3e50;
-            font-size: 26px;
-            margin-bottom: 10px;
+            color: #1e3a8a;
+            font-size: 28px;
+            margin: 0 0 5px 0;
+            text-shadow: 2px 2px 0px #f0fdf4;
         }
 
         p.subtitle {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-bottom: 30px;
+            color: #64748b;
+            font-size: 15px;
+            font-weight: bold;
+            margin: 0 0 25px 0;
         }
 
         .menu-grid {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 16px;
         }
 
-        /* ボタンの共通スタイル */
+        /* ✨ ボタンの共通スタイル（ぷっくり立体感を出しました） */
         .menu-btn {
             display: block;
             text-decoration: none;
             color: white;
             font-size: 20px;
             font-weight: bold;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.1s, opacity 0.2s;
+            padding: 16px;
+            border-radius: 20px;
+            transition: transform 0.05s, box-shadow 0.05s;
+            position: relative;
+            touch-action: manipulation; /* 📱 ズーム対策 */
         }
 
         .menu-btn:active {
-            transform: scale(0.98);
+            transform: translateY(4px);
         }
 
-        /* ゲームごとの色分け */
+        /* 🎨 ゲームごとのぷっくり色分け */
         .btn-flash {
             background-color: #ff9f43;
-            box-shadow: 0 5px 15px rgba(255, 159, 67, 0.4);
+            border-bottom: 6px solid #e67e22;
         }
+        .btn-flash:active { border-bottom-width: 2px; }
+
         .btn-tashi {
             background-color: #ff6b6b;
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+            border-bottom: 6px solid #ee5253;
         }
+        .btn-tashi:active { border-bottom-width: 2px; }
+
         .btn-hiki {
             background-color: #54a0ff;
-            box-shadow: 0 5px 15px rgba(84, 160, 255, 0.4);
+            border-bottom: 6px solid #2e86de;
         }
+        .btn-hiki:active { border-bottom-width: 2px; }
+
+        /* 🆕 文章題用の新ボタン（学校の黒板・ノートをイメージした緑と茶色） */
+        .btn-bunshou {
+            background-color: #10b981;
+            border-bottom: 6px solid #059669;
+        }
+        .btn-bunshou:active { border-bottom-width: 2px; }
+
+        /* なぞりゲーム用の新ボタン */
+        .btn-nazori {
+            background-color: #9c27b0;
+            border-bottom: 6px solid #7b1fa2;
+        }
+        .btn-nazori:active { border-bottom-width: 2px; }
 
         .btn-desc {
             display: block;
             font-size: 13px;
             font-weight: normal;
-            margin-top: 5px;
+            margin-top: 4px;
             opacity: 0.9;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 4px 10px;
+            border-radius: 10px;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
 
 <div class="menu-container">
-    <h1>🎮 けいさんゲーム</h1>
-    <p class="subtitle">あそびたいゲームをえらんでね！</p>
+    <h1>🎮 さんすうパーク</h1>
+    <p class="subtitle">あそびたい ゲームを えらんでね！</p>
 
     <div class="menu-grid">
         <a href="flash.html" class="menu-btn btn-flash">
             🔢 フラッシュあんざん
-            <span class="btn-desc">数字がチカチカでるよ！</span>
+            <br><span class="btn-desc">すうじが チカチカ でるよ！</span>
         </a>
 
         <a href="tashizan.html" class="menu-btn btn-tashi">
             ➕ たしざんゲーム
-            <span class="btn-desc">たしざんのれんしゅう</span>
+            <br><span class="btn-desc">たしざんの れんしゅう</span>
         </a>
 
         <a href="hikizan.html" class="menu-btn btn-hiki">
             ➖ ひきざんゲーム
-            <span class="btn-desc">ひきざんのれんしゅう</span>
+            <br><span class="btn-desc">ひきざんの れんしゅう</span>
         </a>
-        <a href="neongame.html" class="menu-btn btn-hiki">
-            ➖ なぞりゲーム
-            <span class="btn-desc">なぞりゲーム</span>
+
+        <a href="bunshou.html" class="menu-btn btn-bunshou">
+            📚 さんすう 文章題
+            <br><span class="btn-desc">おはなしを よんで こたえよう！</span>
+        </a>
+
+        <a href="neongame.html" class="menu-btn btn-nazori">
+            ✏️ なぞりゲーム
+            <br><span class="btn-desc">画面の線をなぞってみよう</span>
         </a>
     </div>
 </div>

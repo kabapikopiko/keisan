@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>さんすう 文章題タイムアタック</title>
+    <style>
+        html, body {
+            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; position: fixed;
+            background: linear-gradient(135deg, #eef2f3 0%, #8e9eab 100%); 
+            font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', sans-serif;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        .back-to-menu {
+            position: absolute; top: 15px; left: 15px; background-color: #ffffff; color: #34495e;
+            border: 3px solid #7f8c8d; padding: 6px 14px; border-radius: 30px; font-size: 14px; font-weight: bold;
+            text-decoration: none; box-shadow: 0 4px 0 #34495e; z-index: 10;
+            transition: opacity 0.2s ease, visibility 0.2s; touch-action: manipulation;
+        }
+        .back-to-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #34495e; }
+        .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
+
+        #game-container {
+            text-align: center; background: #ffffff; padding: 15px; border-radius: 35px; 
+            border: 6px solid #95a5a6; box-shadow: 0 10px 0 #7f8c8d, 0 15px 30px rgba(0,0,0,0.15);
+            width: 100%; max-width: 350px; height: 94vh; max-height: 600px; box-sizing: border-box;
+            position: relative; display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .game-header h2 { margin: 0 0 5px 0; color: #2c3e50; font-size: 18px; text-shadow: 1px 1px 0 white; }
+
+        #history-board { display: flex; justify-content: center; gap: 4px; margin-bottom: 5px; }
+        .dot {
+            width: 24px; height: 24px; border-radius: 50%; background-color: #f1f2f6;
+            display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #a4b0be;
+        }
+        .dot.current { border: 2px solid #34495e; background-color: #fff; color: #34495e; transform: scale(1.05); }
+        .dot.o { background-color: #2ecc71; color: white; box-shadow: 0 2px 0 #27ae60; }
+        .dot.x { background-color: #e74c3c; color: white; box-shadow: 0 2px 0 #c0392b; }
+
+        /* 文字があふれないようにスクロールと絶妙な高さを確保 */
+        .question-zone {
+            background-color: #1e3d2f; border: 4px solid #8B5A2B; border-radius: 15px;
+            margin: 5px 0; padding: 12px; flex-grow: 1; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; box-shadow: inset 0 4px 10px rgba(0,0,0,0.3);
+            overflow-y: auto;
+            max-height: 180px;
+        }
+
+        /* 1年生が見やすくて、はみ出さないサイズ */
+        #question-text {
+            font-size: 16px; font-weight: bold; color: #ffffff; text-align: left;
+            line-height: 1.5; letter-spacing: 0.5px; width: 100%; word-break: break-all;
+            user-select: text; -webkit-user-select: text;
+        }
+
+        /* 答えの入力枠 */
+        #answer-row {
+            display: flex; justify-content: center; align-items: center; gap: 8px; margin: 5px 0;
+        }
+        #answer-label { font-size: 20px; font-weight: bold; color: #2c3e50; }
+        #answer-display {
+            font-size: 32px; font-weight: bold; width: 100px; height: 48px; line-height: 44px;
+            border-bottom: 4px solid #2c3e50; color: #2c3e50; text-align: center; background-color: #f8fafc; border-radius: 8px 8px 0 0;
+        }
+
+        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; }
+        .key {
+            background-color: #f5f6fa; border: none; border-bottom: 4px solid #dcdde1; border-radius: 12px;
+            font-size: 22px; font-weight: bold; color: #2f3640; padding: 8px 0; cursor: pointer; transition: 0.05s;
+            touch-action: manipulation;
+        }
+        .key:active { transform: translateY(2px); border-bottom-width: 2px; }
+        .key-num { background-color: #fff; border-bottom-color: #ced6e0; }
+        .key-clear { background-color: #ffae34; border-bottom-color: #cc8412; color: white; font-size: 16px; }
+        .key-enter { grid-column: span 2; background-color: #2ed573; border-bottom-color: #26af5f; color: white; font-size: 18px; }
+
+        #flash-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255,255,255,0.96); border-radius: 29px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.1s ease;
+        }
+        #flash-overlay.active { opacity: 1; }
+        #flash-mark { font-size: 80px; }
+        #flash-text { font-size: 18px; font-weight: bold; margin-top: 10px; text-align: center; padding: 0 15px; line-height: 1.5; }
+
+        #result-screen { display: none; height: 100%; flex-direction: column; justify-content: center; align-items: center; }
+        .time-label { font-size: 16px; color: #7f8c8d; margin-bottom: 5px; }
+        .time-text { font-size: 38px; color: #2c3e50; font-weight: bold; margin-bottom: 15px; text-shadow: 1px 1px 0 white; }
+        .btn-restart {
+            background-color: #2ed573; color: white; border: none; padding: 12px 24px; font-size: 18px; font-weight: bold;
+            border-radius: 50px; border-bottom: 5px solid #26af5f; cursor: pointer; width: 100%;
+            box-shadow: 0 5px 10px rgba(46, 213, 115, 0.3); touch-action: manipulation;
+        }
+
+        .particle { position: absolute; pointer-events: none; border-radius: 50%; z-index: 999; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" id="back-btn" class="back-to-menu" onclick="playSound('click')">🏠 メニュー</a>
+
+<div class="wrapper">
+    <div id="game-container">
+        <div id="flash-overlay">
+            <div id="flash-mark">💮</div>
+            <div id="flash-text">せいかい！</div>
+        </div>
+
+        <div id="play-screen" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="game-header">
+                <h2>⏱️ さんすう 文章題 (10もん)</h2>
+                <div id="history-board">
+                    <div class="dot" id="dot-0">1</div><div class="dot" id="dot-1">2</div><div class="dot" id="dot-2">3</div><div class="dot" id="dot-3">4</div><div class="dot" id="dot-4">5</div>
+                    <div class="dot" id="dot-5">6</div><div class="dot" id="dot-6">7</div><div class="dot" id="dot-7">8</div><div class="dot" id="dot-8">9</div><div class="dot" id="dot-9">10</div>
+                </div>
+            </div>
+            
+            <div class="question-zone">
+                <div id="question-text">読み込み中...</div>
+            </div>
+
+            <div id="answer-row">
+                <div id="answer-label">こたえ：</div>
+                <div id="answer-display"></div>
+            </div>
+
+            <div class="keyboard">
+                <button class="key key-num" onclick="pressKey('1')">1</button><button class="key key-num" onclick="pressKey('2')">2</button><button class="key key-num" onclick="pressKey('3')">3</button>
+                <button class="key key-num" onclick="pressKey('4')">4</button><button class="key key-num" onclick="pressKey('5')">5</button><button class="key key-num" onclick="pressKey('6')">6</button>
+                <button class="key key-num" onclick="pressKey('7')">7</button><button class="key key-num" onclick="pressKey('8')">8</button><button class="key key-num" onclick="pressKey('9')">9</button>
+                <button class="key key-num" onclick="pressKey('0')">0</button>
+                <button class="key key-clear" onclick="pressKey('clear')">けす</button>
+                <button class="key key-enter" onclick="pressKey('enter')">こたえる</button>
+            </div>
+        </div>
+
+        <div id="result-screen">
+            <h2>🎉 チャレンジ終了！</h2>
+            <div class="time-label">かかった時間</div>
+            <div class="time-text" id="final-time">00秒00</div>
+            <p id="final-score" style="font-size: 18px; font-weight: bold; color: #57606f; margin-bottom: 20px;"></p>
+            <button class="btn-restart" onclick="initGame()">もういちどチャレンジ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 🆕 ランダム生成用のパーツを大幅に強化！
+    const names = ["たろうくん", "さくらちゃん", "じろうくん", "ひなたちゃん", "ゆうとくん", "みうちゃん", "けんたくん", "あおいちゃん", "そうたくん", "めいちゃん"];
+    const items = ["りんご", "クッキー", "みかん", "キャンディー", "いちご", "ドーナツ", "チョコレート", "ミニトマト", "パン", "ゼリー"];
+    const animals = ["ことり", "うさぎ", "ねこ", "いぬ", "ハムスター", "カエル"];
+    const vehicles = ["くるま", "じてんしゃ", "バス", "トラック"];
+
+    // 🆕 文章題のテンプレート集（1年生の全パターンを網羅・単位も自動化）
+    const templates = [
+        // ➕ たしざん（あわせていくつ：合併）
+        {
+            type: "add",
+            text: (n, i, v1, v2) => {
+                const item = items[Math.floor(Math.random() * items.length)];
+                return `${n}は ${item}を ${v1}こ もっています。<br>お友だちが ${item}を ${v2}こ もってきました。<br>あわせて 何こに なったでしょう。`;
+            }
+        },
+        // ➕ たしざん（ふえるといくつ：増加）
+        {
+            type: "add",
+            text: (n, i, v1, v2) => {
+                const vehicle = vehicles[Math.floor(Math.random() * vehicles.length)];
+                return `ちゅうしゃじょうに ${vehicle}が ${v1}だい とまっています。<br>あとから ${v2}だい やってきました。<br>${vehicle}は ぜんぶで 何だいになったでしょう。`;
+            }
+        },
+        // ➕ たしざん（ぜんぶでいくつ：合併・生き物）
+        {
+            type: "add",
+            text: (n, i, v1, v2) => {
+                const animal = animals[Math.floor(Math.random() * animals.length)];
+                return `にわに ${animal}が ${v1}ひき いました。<br>そこへ ${animal}が ${v2}ひき やってきました。<br>${animal}は ぜんぶで 何ひきに なったでしょう。`;
+            }
+        },
+        // ➕ たしざん（子どもたちの数：増加）
+        {
+            type: "add",
+            text: (n, i, v1, v2) => `こうえんに 子どもが ${v1}にん いました。<br>あとから ${v2}にん やってきました。<br>子どもは ぜんぶで 何にんに なったでしょう。`
+        },
+        // ➕ たしざん（お花の数：合併）
+        {
+            type: "add",
+            text: (n, i, v1, v2) => `あかい おはなが ${v1}りん さいいています。<br>しろい おはなが ${v2}りん さいいています。<br>おはなは ぜんぶで 何りん さいいているでしょう。`
+        },
+
+        // ➖ ひきざん（のこりはいくつ：求残・食べる）
+        {
+            type: "sub",
+            text: (n, i, v1, v2) => {
+                const item = items[Math.floor(Math.random() * items.length)];
+                return `${n}は ${item}を ${v1}こ もっていました。<br>そのうち ${v2}こ たべました。<br>のこりは 何こに なったでしょう。`;
+            }
+        },
+        // ➖ ひきざん（のこりはいくつ：求残・帰る）
+        {
+            type: "sub",
+            text: (n, i, v1, v2) => `こうえんに 子どもが ${v1}にん いました。<br>${v2}にん おうちへ かえりました。<br>のこりは 何にんに なったでしょう。`
+        },
+        // ➖ ひきざん（のこりはいくつ：求残・生き物）
+        {
+            type: "sub",
+            text: (n, i, v1, v2) => {
+                const animal = animals[Math.floor(Math.random() * animals.length)];
+                return `きに ${animal}が ${v1}ひき とまっていました。<br>${v2}ひき どこかへ いってしまいました。<br>のこりは 何ひきでしょう。`;
+            }
+        },
+        // ➖ ひきざん（ちがいはいくつ：求差・どっちが多い）
+        {
+            type: "sub",
+            text: (n, i, v1, v2) => {
+                const item = items[Math.floor(Math.random() * items.length)];
+                return `あかい ${item}が ${v1}こ、きいろい ${item}が ${v2}こ あります。<br>あかい ${item}は きいろい ${item}より 何こ 多いでしょう。`;
+            }
+        },
+        // ➖ ひきざん（ちがいはいくつ：求差・人数の違い）
+        {
+            type: "sub",
+            text: (n, i, v1, v2) => `男の子が ${v1}にん、女の子が ${v2}にん います。<br>男の子は 女の子より 何にん 多いでしょう。`
+        },
+        // ➖ ひきざん（ちがいはいくつ：求差・ミニカーの長さや数の比較）
+        {
+            type: "sub",
+            text: (n, i, v1, v2) => {
+                const vehicle = vehicles[Math.floor(Math.random() * vehicles.length)];
+                return `${n}は ${vehicle}の おもちゃを ${v1}だい、お友だちは ${v2}だい もっています。<br>ちがいは 何だいでしょう。`;
+            }
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let correctCount = 0;
+    let currentInput = "";
+    let startTime = 0;
+    let lockInput = false;
+    let correctAnswer = 0;
+    let currentExplanation = ""; 
+
+    const totalQuestions = 10;
+
+    const backBtn = document.getElementById('back-btn');
+    const playScreen = document.getElementById('play-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const questionTextEl = document.getElementById('question-text');
+    const answerDisplayEl = document.getElementById('answer-display');
+    const flashOverlay = document.getElementById('flash-overlay');
+    const flashMark = document.getElementById('flash-mark');
+    const flashText = document.getElementById('flash-text');
+    const finalTimeEl = document.getElementById('final-time');
+    const finalScoreEl = document.getElementById('final-score');
+
+    // 効果音
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
+        if (type === 'click') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08); osc.start(now); osc.stop(now + 0.08);
+        } else if (type === 'correct') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.08); gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'incorrect') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(140, now); osc.frequency.linearRampToValueAtTime(120, now + 0.25); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25); osc.start(now); osc.stop(now + 0.25);
+        }
+    }
+
+    // キラキラ
+    function createParticles() {
+        const colors = ['#2ecc71', '#ffca28', '#3498db', '#e74c3c', '#9b59b6'];
+        for (let i = 0; i < 25; i++) {
+            const p = document.createElement('div'); p.className = 'particle'; const size = Math.random() * 8 + 4;
+            p.style.width = `${size}px`; p.style.height = `${size}px`; p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; p.style.left = '50%'; p.style.top = '45%'; document.body.appendChild(p);
+            const angle = Math.random() * Math.PI * 2, v = Math.random() * 140 + 70; const dx = Math.cos(angle) * v, dy = Math.sin(angle) * v - 20;
+            const anim = p.animate([{ transform: 'translate(-50%, -50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0)`, opacity: 0 }], { duration: 500, easing: 'cubic-bezier(0.1, 0.8, 0.25, 1)', fill: 'forwards' });
+            anim.onfinish = () => p.remove();
+        }
+    }
+
+    function initGame() {
+        currentQuestionIndex = 0; correctCount = 0; currentInput = ""; lockInput = false;
+        for (let i = 0; i < totalQuestions; i++) {
+            const dot = document.getElementById(`dot-${i}`); dot.className = "dot"; dot.innerText = i + 1;
+        }
+        playScreen.style.display = 'flex'; resultScreen.style.display = 'none'; flashOverlay.classList.remove('active');
+        
+        if (backBtn) { backBtn.classList.add('hidden'); }
+        
+        startTime = performance.now();
+        makeQuestion();
+    }
+
+    function makeQuestion() {
+        currentInput = ""; answerDisplayEl.innerText = "";
+        document.getElementById(`dot-${currentQuestionIndex}`).classList.add('current');
+
+        const randomName = names[Math.floor(Math.random() * names.length)];
+        const randomItem = items[Math.floor(Math.random() * items.length)];
+        const template = templates[Math.floor(Math.random() * templates.length)];
+
+        let val1 = 0, val2 = 0;
+
+        if (template.type === "add") {
+            val1 = Math.floor(Math.random() * 9) + 1; 
+            val2 = Math.floor(Math.random() * 9) + 1; 
+            correctAnswer = val1 + val2;
+            currentExplanation = `しき：${val1} ＋ ${val2} ＝ ${correctAnswer}`;
+        } else {
+            val1 = Math.floor(Math.random() * 10) + 5; 
+            val2 = Math.floor(Math.random() * 4) + 1;  
+            if(template.text.toString().includes("多いでしょう")) {
+                val1 = Math.floor(Math.random() * 9) + 1;
+                val2 = Math.floor(Math.random() * 9) + 1;
+            }
+            if (val1 < val2) { [val1, val2] = [val2, val1]; }
+            correctAnswer = val1 - val2;
+            currentExplanation = `しき：${val1} － ${val2} ＝ ${correctAnswer}`;
+        }
+
+        questionTextEl.innerHTML = template.text(randomName, randomItem, val1, val2);
+        lockInput = false;
+    }
+
+    function pressKey(key) {
+        if (lockInput) return;
+        playSound('click');
+        if (key === 'clear') { currentInput = ""; } 
+        else if (key === 'enter') { checkAnswer(); return; } 
+        else { if (currentInput.length < 2) currentInput += key; }
+        answerDisplayEl.innerText = currentInput;
+    }
+
+    function checkAnswer() {
+        const userAnswer = parseInt(currentInput); if (isNaN(userAnswer)) return;
+        lockInput = true;
+        const currentDot = document.getElementById(`dot-${currentQuestionIndex}`);
+        currentDot.classList.remove('current');
+
+        let isCorrect = (userAnswer === correctAnswer);
+        if (isCorrect) {
+            playSound('correct'); createParticles();
+            currentDot.className = "dot o"; currentDot.innerText = "◯";
+            flashMark.innerText = "💮"; flashText.innerText = `せいかい！ すごい！\n\n${currentExplanation}`;
+            flashText.style.color = "#2ecc71";
+            correctCount++;
+        } else {
+            playSound('incorrect');
+            currentDot.className = "dot x"; currentDot.innerText = "×";
+            flashMark.innerText = "❌"; flashText.innerText = `おしい！\nこたえは 【${correctAnswer}】 だよ\n\n${currentExplanation}`;
+            flashText.style.color = "#e74c3c";
+        }
+
+        flashOverlay.className = "active";
+
+        setTimeout(() => {
+            flashOverlay.className = "";
+            currentQuestionIndex++;
+            if (currentQuestionIndex < totalQuestions) makeQuestion(); else endGame();
+        }, 3000); 
+    }
+
+    function endGame() {
+        const endTime = performance.now(); const totalTime = ((endTime - startTime) / 1000).toFixed(2);
+        playScreen.style.display = 'none'; resultScreen.style.display = 'flex';
+        finalTimeEl.innerText = `${totalTime} 秒`; finalScoreEl.innerText = `${totalQuestions}もん中 ${correctCount}もん せいかい！`;
+        
+        if (backBtn) { backBtn.classList.remove('hidden'); }
+    }
+
+    // スタート
+    initGame();
+</script>
+
+</body>
+</html>
