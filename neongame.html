@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>みつけよう！光の星座（タッチ完全安定版）</title>
+    <title>みつけよう！光の星座（超サクサク安定版）</title>
     <style>
-        /* 🛠️ iPhoneの画面の引っ張りバグ（バウンススクロール）をシステムごと完全に禁止 */
         html, body {
             width: 100%; height: 100%; margin: 0; padding: 0; 
             overflow: hidden; position: fixed;
             overscroll-behavior: none;
-            -webkit-overflow-scrolling: auto;
         }
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none; /* スマホのお節介なズームやスクロールを一切させない */
+            touch-action: none;
         }
         body {
             background: linear-gradient(135deg, #020617 0%, #0f052d 100%);
@@ -29,9 +27,7 @@
             position: absolute; top: 15px; left: 15px; background-color: #ffffff; color: #020617;
             border: 2px solid #38bdf8; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: bold;
             text-decoration: none; box-shadow: 0 4px 0 #38bdf8; z-index: 200;
-            transition: opacity 0.2s ease; touch-action: manipulation;
         }
-        .back-to-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #38bdf8; }
         
         #header-area { text-align: center; margin-bottom: 5px; z-index: 10; margin-top: 20px; }
         #title { font-size: 14px; font-weight: bold; letter-spacing: 4px; color: #94a3b8; margin: 0 0 3px 0; }
@@ -63,7 +59,7 @@
         .btn-hard { background-color: #8b5cf6; border-bottom: 4px solid #6d28d9; }
         .btn-expert { background-color: #ec4899; border-bottom: 4px solid #be185d; }
 
-        #play-screen { display: none; flex-direction: column; align-items: center; width: 100%; position: relative; }
+        #play-screen { display: none; flex-direction: column; align-items: center; width: 100%; }
 
         /* ゲーム盤面 */
         #game-outer { position: relative; width: 92vw; max-width: 360px; aspect-ratio: 1 / 1; z-index: 10; }
@@ -97,21 +93,20 @@
         .pad.hint { background-color: #eab308; box-shadow: 0 0 12px #fde047; }
         .pad.active { background-color: #10b981; box-shadow: 0 0 15px #34d399; }
 
-        /* 🛠️ ボタンの誤作動を防ぐため、透明な壁ではなく、必要のない時は「非表示（display:none）」にする完璧な設計に変更 */
+        /* 🆕 リトライ画面：バグを防ぐため、ゲームオーバー時以外は「存在すらさせない（display:none）」ように徹底 */
         #retry-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(2, 6, 23, 0.9); border-radius: 16px;
+            background-color: rgba(2, 6, 23, 0.95); border-radius: 16px;
             display: none; flex-direction: column; align-items: center; justify-content: center;
             z-index: 150;
         }
-        #retry-overlay.active { display: flex; } /* ゲームオーバー時だけ出現 */
+        #retry-overlay.active { display: flex; } 
         #retry-title { font-size: 18px; font-weight: bold; margin-bottom: 25px; color: #f43f5e; text-align: center; line-height: 1.5; padding: 0 20px; }
         
         .action-btn {
             padding: 16px 50px; font-size: 18px; font-weight: bold;
             background-color: #38bdf8; color: #020617; border: none; border-radius: 50px;
             box-shadow: 0 5px 0 #0284c7; cursor: pointer; transition: 0.05s;
-            position: relative; z-index: 160;
         }
         .action-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #0284c7; }
     </style>
@@ -121,22 +116,22 @@
     <a href="index.html" id="back-btn" class="back-to-menu">🏠 メニュー</a>
 
     <div id="header-area">
-        <div id="title">MELODY PANEL LINE</div>
+        <div id="title">NEON PANEL LINE</div>
         <div id="score-board">SCORE: 00000</div>
-        <div id="title-rank">称号: 新米の指揮者</div>
+        <div id="title-rank">称号: パネルの挑戦者</div>
     </div>
 
     <div id="level-screen">
-        <h2>どのメロディに挑戦する？</h2>
-        <button class="btn-level btn-easy" onclick="selectDifficulty('easy')">🟢 しょきゅう (4x4・5音)</button>
-        <button class="btn-level btn-medium" onclick="selectDifficulty('medium')">🟡 ちゅうきゅう (6x6・8音)</button>
-        <button class="btn-level btn-hard" onclick="selectDifficulty('hard')">🔴 じょうきゅう (8x8・12音)</button>
+        <h2>どのパネルに挑戦する？</h2>
+        <button class="btn-level btn-easy" onclick="selectDifficulty('easy')">🟢 しょきゅう (4x4・短い)</button>
+        <button class="btn-level btn-medium" onclick="selectDifficulty('medium')">🟡 ちゅうきゅう (6x6・ふつう)</button>
+        <button class="btn-level btn-hard" onclick="selectDifficulty('hard')">🔴 じょうきゅう (8x8・ながい)</button>
         <button class="btn-level btn-expert" onclick="selectDifficulty('expert')">🔥 ちょうじょうきゅう (8x8・超ロング大作)</button>
     </div>
 
     <div id="play-screen">
         <div id="status-area">
-            <div id="level">MELODY 1</div>
+            <div id="level">PANEL 1</div>
             <div id="message">おぼえてね...</div>
         </div>
 
@@ -190,14 +185,6 @@
         let pads = [];
         let padPositions = []; 
 
-        const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392.00, A4=440.00, B4=493.88, C5=523.25, D5=587.33, E5=659.25, F5=698.46;
-        const songMelodies = {
-            easy:   [E4, D4, C4, D4, E4, E4, E4], 
-            medium: [C4, D4, E4, F4, E4, D4, C4, E4], 
-            hard:   [C4, C4, G4, G4, A4, A4, G4, F4, F4, E4, E4, D4], 
-            expert: [G4, C5, C5, C5, B4, C5, D5, B4, G4, A4, B4, C5, C5, C5, E5, D5, C5, D5, E5, C5, D5, E5, F5] 
-        };
-
         function selectDifficulty(diff) {
             currentDifficulty = diff;
             if (diff === 'easy')   { gridSize = 4; }
@@ -241,19 +228,23 @@
             });
         }
 
+        // 🎵 【安定化】バグを誘発していた複雑なメロディ配列を廃止！
+        // 通過したマスの位置（インデックス）に基づいて、リアルタイムに綺麗な高周波を自動計算して鳴らします
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playMelodyTone(stepIndex) {
+        function playSmoothTone(index) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
             
-            const currentSong = songMelodies[currentDifficulty];
-            const freq = currentSong[stepIndex % currentSong.length];
+            // 心地いいハープ・オルゴール風のピコピコ高音階
+            const scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+            const freq = scale[index % scale.length] * (Math.floor(index / scale.length) + 1 * 0.5 + 1);
 
-            osc.frequency.value = freq; osc.type = 'sine';
-            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            osc.frequency.setValueAtTime(freq > 1200 ? freq / 2 : freq, audioCtx.currentTime); 
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
         }
 
         function getPadCenter(index) {
@@ -271,11 +262,11 @@
         }
 
         function updateRank() {
-            let rank = "みならい指揮者";
-            if (level >= 3)  rank = "天才アレンジャー";
-            if (level >= 6)  rank = "絶対音感マスター";
-            if (level >= 9)  rank = "ネオンマエストロ";
-            rankDisplay.innerText = `称号: ${rank}`;
+            let rank = "みならいパネラー";
+            if (level >= 3)  rank = "スピードスター";
+            if (level >= 6)  rank = "パズル達人";
+            if (level >= 9)  rank = "ネオンキング";
+            rankDisplay.innerText = `割号: ${rank}`;
         }
 
         function getAdjacentPads(index) {
@@ -326,7 +317,7 @@
             timeBar.style.backgroundColor = '#38bdf8';
             
             let baseTime = 10000;
-            if (currentDifficulty === 'hard') baseTime = 16000;
+            if (currentDifficulty === 'hard') baseTime = 15000;
             if (currentDifficulty === 'expert') baseTime = 25000; 
 
             const duration = Math.max(baseTime - (level * 400), 6000); 
@@ -347,8 +338,8 @@
 
         async function playHint() {
             isGameActive = false;
-            retryOverlay.classList.remove('active'); // リトライ画面を完全に非表示
-            messageDisplay.innerText = "ひかる パネルの メロディを おぼえてね...";
+            retryOverlay.classList.remove('active'); 
+            messageDisplay.innerText = "ひかる パネルの ルートを おぼえてね...";
             clearInterval(timeInterval);
             timeBar.style.width = '100%';
             if (backBtn) backBtn.classList.add('hidden');
@@ -364,14 +355,14 @@
             pads[currentRoute[currentRoute.length - 1]].classList.add('goal');
 
             let currentHintRoute = [];
-            let speed = (currentRoute.length > 8) ? 170 : 260;
+            let speed = (currentRoute.length > 8) ? 170 : 250;
 
             for (let i = 0; i < currentRoute.length; i++) {
                 await new Promise(r => setTimeout(r, speed));
                 pads[currentRoute[i]].classList.add('hint');
                 currentHintRoute.push(currentRoute[i]);
                 drawSvgLine(guidePath, currentHintRoute); 
-                playMelodyTone(i); 
+                playSmoothTone(currentRoute[i]); // 🆕 音階を滑らかに再生
             }
 
             await new Promise(r => setTimeout(r, 800));
@@ -379,7 +370,7 @@
             guidePath.setAttribute('d', ''); 
             
             isGameActive = true;
-            messageDisplay.innerText = "START パネル から メロディを なぞろう！";
+            messageDisplay.innerText = "START パネル から なぞって はじめよう！";
             if (backBtn) backBtn.classList.remove('hidden');
             startTimer();
         }
@@ -411,7 +402,7 @@
             messageDisplay.innerHTML = msg;
             
             retryTitle.innerHTML = msg;
-            retryOverlay.classList.add('active'); // オーバーレイを表示
+            retryOverlay.classList.add('active'); // 🆕 オーバーレイ画面を表示して前面の物理ボタンのみ有効にする
             
             pads.forEach(p => p.classList.remove('active'));
             drawSvgLine(playerLine, []);
@@ -425,19 +416,19 @@
 
         function drawStart(index) {
             if (!isGameActive || index === null) return;
-            if (trapPads.includes(index)) { gameOver("⚠️ トラップに ふんじゃった！"); return; }
+            if (trapPads.includes(index)) { gameOver("⚠️ トラップを ふんじゃった！"); return; }
             if (index !== currentRoute[0]) return;
             
             isDrawing = true;
             playerPath = [index];
             pads[index].classList.add('active');
             drawSvgLine(playerLine, playerPath);
-            playMelodyTone(0); 
+            playSmoothTone(index); 
         }
 
         function drawMove(index) {
             if (!isDrawing || index === null) return;
-            if (trapPads.includes(index)) { gameOver("⚠️ トラップに ふんじゃった！"); return; }
+            if (trapPads.includes(index)) { gameOver("⚠️ トラップを ふんじゃった！"); return; }
 
             const lastIndex = playerPath[playerPath.length - 1];
             if (index === lastIndex) return;
@@ -447,14 +438,14 @@
                     pads[lastIndex].classList.remove('active');
                     playerPath.pop();
                     drawSvgLine(playerLine, playerPath);
-                    playMelodyTone(playerPath.length - 1);
+                    playSmoothTone(index);
                     return;
                 }
                 if (!playerPath.includes(index)) {
                     playerPath.push(index);
                     pads[index].classList.add('active');
                     drawSvgLine(playerLine, playerPath); 
-                    playMelodyTone(playerPath.length - 1); 
+                    playSmoothTone(index); 
                 }
             }
         }
@@ -476,17 +467,16 @@
                 const bonus = Math.floor(timeLimit * 10);
                 score += baseScore + bonus;
                 scoreDisplay.innerText = `SCORE: ${String(score).padStart(5, '0')}`;
-                messageDisplay.innerText = `素晴らしい演奏です！つぎのステージへ！`;
+                messageDisplay.innerText = `パーフェクト！つぎのステージへ！`;
                 level++;
                 setTimeout(nextLevel, 1200);
             } else {
-                gameOver("メロディの ルートが ちがうみたい！");
+                gameOver("ルートが ちがうみたい！<br>もういちど おぼえなおそう");
             }
         }
 
         const outerArea = document.getElementById('game-outer');
 
-        // 🛠️ 【修正】iPhoneで指が外にはみ出しても電波を絶対に離さない最強のイベントリスナー構造に進化
         outerArea.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const t = e.touches[0];
@@ -498,7 +488,6 @@
             e.preventDefault();
             const t = e.touches[0];
             const idx = getPadIndexFromCoords(t.clientX, t.clientY);
-            // 指が枠外に出て何も取得できないとき（null）でも途切れないようにガード
             if(idx !== null) { drawMove(idx); }
         }, { passive: false });
 
@@ -506,13 +495,11 @@
             e.preventDefault(); drawEnd();
         }, false);
 
-        // 🛠️ iPhoneが勝手にタッチを無効化する最悪のバグ（touchcancel）が起きたら即座にやり直しとして受け付ける
         outerArea.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            drawEnd();
+            e.preventDefault(); drawEnd();
         }, false);
 
-        // マウス用（PC環境）
+        // PCマウス用
         outerArea.addEventListener('mousedown', (e) => {
             e.preventDefault();
             const idx = getPadIndexFromCoords(e.clientX, e.clientY);
