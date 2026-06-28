@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>みつけよう！光の星座（タッチ判定快適版）</title>
+    <title>みつけよう！光の星座（なぞり快適版）</title>
     <style>
         * {
             box-sizing: border-box;
@@ -19,26 +19,37 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; overflow: hidden;
         }
+
+        /* 🏠 メニューボタンの配置を安全な左上に */
+        .back-to-menu {
+            position: absolute; top: 15px; left: 15px; background-color: #ffffff; color: #020617;
+            border: 2px solid #38bdf8; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: bold;
+            text-decoration: none; box-shadow: 0 4px 0 #38bdf8; z-index: 100;
+            transition: opacity 0.2s ease; touch-action: manipulation;
+        }
+        .back-to-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #38bdf8; }
+        .hidden { opacity: 0; pointer-events: none; }
         
-        #header-area { text-align: center; margin-bottom: 5px; z-index: 10; }
-        #title { font-size: 15px; font-weight: bold; letter-spacing: 4px; color: #94a3b8; margin: 0 0 3px 0; }
+        #header-area { text-align: center; margin-bottom: 5px; z-index: 10; margin-top: 30px; }
+        #title { font-size: 14px; font-weight: bold; letter-spacing: 4px; color: #94a3b8; margin: 0 0 3px 0; }
         #score-board { font-size: 24px; color: #38bdf8; font-weight: bold; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
         #title-rank { font-size: 12px; color: #64748b; margin-top: 2px; }
 
         #status-area { text-align: center; margin-bottom: 8px; z-index: 10; }
-        #level { font-size: 22px; font-weight: bold; color: #fff; }
-        #message { font-size: 13px; color: #94a3b8; min-height: 18px; margin-top: 2px; }
+        #level { font-size: 20px; font-weight: bold; color: #fff; }
+        #message { font-size: 13px; color: #94a3b8; min-height: 18px; margin-top: 2px; padding: 0 10px; }
 
         #time-bar-container {
             width: 85vw; max-width: 340px; height: 6px; background: #0f172a; border-radius: 3px; margin-bottom: 15px; overflow: hidden; z-index: 10;
         }
         #time-bar { width: 100%; height: 100%; background-color: #38bdf8; transition: width 0.1s linear; box-shadow: 0 0 8px #38bdf8; }
 
+        /* 難易度選択画面 */
         #level-screen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 100%; gap: 12px; z-index: 20; width: 90vw; max-width: 340px;
         }
-        #level-screen h2 { margin: 0 0 10px 0; color: #fff; font-size: 22px; letter-spacing: 2px; text-shadow: 0 0 8px rgba(255,255,255,0.3); }
+        #level-screen h2 { margin: 0 0 10px 0; color: #fff; font-size: 22px; letter-spacing: 2px; }
         .btn-level {
             width: 100%; padding: 14px 0; font-size: 18px; font-weight: bold; color: white; border: none; border-radius: 20px;
             cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,0.3); transition: 0.1s; touch-action: manipulation;
@@ -49,8 +60,9 @@
         .btn-hard { background-color: #8b5cf6; border-bottom: 4px solid #6d28d9; }
         .btn-expert { background-color: #ec4899; border-bottom: 4px solid #be185d; }
 
-        #play-screen { display: none; flex-direction: column; align-items: center; width: 100%; }
+        #play-screen { display: none; flex-direction: column; align-items: center; width: 100%; position: relative; }
 
+        /* ゲーム盤面 */
         #game-outer { position: relative; width: 92vw; max-width: 360px; aspect-ratio: 1 / 1; z-index: 10; }
         #line-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 11; }
         #game-board {
@@ -59,10 +71,10 @@
             border: 1px solid #1e293b; box-shadow: inset 0 4px 30px rgba(0,0,0,0.7);
         }
 
+        /* 星のドット */
         .pad {
             border-radius: 50%; width: 10px; height: 10px; justify-self: center; align-self: center;
-            background-color: rgba(71, 85, 105, 0.4); position: relative; cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s; z-index: 12;
+            background-color: rgba(71, 85, 105, 0.4); position: relative; z-index: 12;
         }
 
         .pad.start { background-color: #38bdf8; box-shadow: 0 0 14px #38bdf8, 0 0 4px #fff; transform: scale(1.4); }
@@ -74,10 +86,20 @@
         .pad.hint { background-color: #fef08a; box-shadow: 0 0 18px #fef08a, 0 0 6px #fff; transform: scale(1.5); }
         .pad.active { background-color: #34d399; box-shadow: 0 0 18px #34d399, 0 0 6px #fff; transform: scale(1.5); }
 
+        /* 🆕 画面中央に出る大きなリトライオーバーレイ画面 */
+        #retry-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(2, 6, 23, 0.85); border-radius: 24px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
+        #retry-overlay.active { opacity: 1; pointer-events: auto; }
+        #retry-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #f43f5e; text-align: center; }
+        
         .action-btn {
-            margin-top: 20px; padding: 12px 45px; font-size: 16px; font-weight: bold;
-            background-color: #38bdf8; color: #020617; border: none; border-radius: 30px;
-            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4); cursor: pointer; z-index: 10; transition: 0.2s;
+            padding: 14px 40px; font-size: 18px; font-weight: bold;
+            background-color: #38bdf8; color: #020617; border: none; border-radius: 50px;
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4); cursor: pointer; transition: 0.1s;
             touch-action: manipulation;
         }
         .action-btn:active { transform: scale(0.95); }
@@ -85,7 +107,7 @@
 </head>
 <body>
 
-    <a href="index.html" id="back-btn" class="back-to-menu" onclick="playSound('click')">🏠 メニュー</a>
+    <a href="index.html" id="back-btn" class="back-to-menu">🏠 メニュー</a>
 
     <div id="header-area">
         <div id="title">CONSTELLATION LINE</div>
@@ -93,6 +115,7 @@
         <div id="title-rank">称号: 星を見上げる者</div>
     </div>
 
+    <!-- 難易度選択画面 -->
     <div id="level-screen">
         <h2>どの星空に挑戦する？</h2>
         <button class="btn-level btn-easy" onclick="selectDifficulty('easy')">🟢 しょきゅう (4x4)</button>
@@ -101,6 +124,7 @@
         <button class="btn-level btn-expert" onclick="selectDifficulty('expert')">🔥 ちょうじょうきゅう (10x10)</button>
     </div>
 
+    <!-- プレイ画面 -->
     <div id="play-screen">
         <div id="status-area">
             <div id="level">CONSTELLATION 1</div>
@@ -112,14 +136,18 @@
         </div>
 
         <div id="game-outer">
+            <!-- 🆕 中央にポップアップするやり直し画面 -->
+            <div id="retry-overlay">
+                <div id="retry-title">タイムアップ！</div>
+                <button id="start-btn" class="action-btn">もういちど見る</button>
+            </div>
+
             <svg id="line-svg">
                 <path id="guide-path" d="" fill="none" stroke="rgba(254, 240, 138, 0.6)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,4"/>
                 <path id="player-path-line" d="" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 0px 5px #34d399);"/>
             </svg>
             <div id="game-board"></div>
         </div>
-
-        <button id="start-btn" class="action-btn" style="visibility:hidden;">もういちど見る</button>
     </div>
 
     <script>
@@ -141,6 +169,8 @@
         const levelScreen = document.getElementById('level-screen');
         const playScreen = document.getElementById('play-screen');
         const startBtn = document.getElementById('start-btn');
+        const retryOverlay = document.getElementById('retry-overlay');
+        const retryTitle = document.getElementById('retry-title');
         const levelDisplay = document.getElementById('level');
         const messageDisplay = document.getElementById('message');
         const scoreDisplay = document.getElementById('score-board');
@@ -150,7 +180,7 @@
         const guidePath = document.getElementById('guide-path');
         const playerLine = document.getElementById('player-path-line');
         let pads = [];
-        let padPositions = []; // 各マスの中心座標キャッシュ用
+        let padPositions = []; 
 
         function selectDifficulty(diff) {
             currentDifficulty = diff;
@@ -161,7 +191,7 @@
             totalPads = gridSize * gridSize;
 
             board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            board.style.gap = (gridSize >= 10) ? '6px' : '10px';
+            board.style.gap = (gridSize >= 10) ? '5px' : '8px';
 
             levelScreen.style.display = 'none';
             playScreen.style.display = 'flex';
@@ -180,13 +210,13 @@
                 const pad = document.createElement('div');
                 pad.className = 'pad';
                 pad.id = `pad-${i}`;
-                if(gridSize >= 10) { pad.style.width = '7px'; pad.style.height = '7px'; }
+                if(gridSize >= 8)  { pad.style.width = '8px'; pad.style.height = '8px'; }
+                if(gridSize >= 10) { pad.style.width = '6px'; pad.style.height = '6px'; }
                 board.appendChild(pad);
                 pads.push(pad);
             }
         }
 
-        // 全マスの中心座標を計算してキャッシュする（なぞり判定を劇的に高速・正確にするため）
         function cachePadPositions() {
             const boardRect = document.getElementById('game-outer').getBoundingClientRect();
             padPositions = pads.map(pad => {
@@ -213,9 +243,9 @@
             const freq = baseFreq * Math.pow(2, (scale[noteIndex] + octave * 12) / 12);
 
             osc.frequency.value = freq; osc.type = 'sine';
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
         }
 
         function getPadCenter(index) {
@@ -272,11 +302,12 @@
         function generateTraps() {
             trapPads = [];
             if (level < 3) return;
-            let maxTraps = 3;
-            if (currentDifficulty === 'hard') maxTraps = 6;
-            if (currentDifficulty === 'expert') maxTraps = 9;
+            let maxTraps = 2;
+            if (currentDifficulty === 'hard') maxTraps = 4;
+            if (currentDifficulty === 'expert') maxTraps = 7;
             
-            const trapCount = Math.min(1 + Math.floor((level - 3) / 1.5), maxTraps);
+            // 序盤の罠の数をマイルドに調整
+            const trapCount = Math.min(1 + Math.floor((level - 3) / 2), maxTraps);
             while(trapPads.length < trapCount) {
                 let t = Math.floor(Math.random() * totalPads);
                 if (!trapPads.includes(t)) { trapPads.push(t); }
@@ -289,11 +320,11 @@
             timeBar.style.width = '100%';
             timeBar.style.backgroundColor = '#38bdf8';
             
-            let baseTime = 10000;
-            if (currentDifficulty === 'hard') baseTime = 14000;
-            if (currentDifficulty === 'expert') baseTime = 18000;
+            let baseTime = 11000;
+            if (currentDifficulty === 'hard') baseTime = 15000;
+            if (currentDifficulty === 'expert') baseTime = 20000;
 
-            const duration = Math.max(baseTime - (level * 500), 5000); 
+            const duration = Math.max(baseTime - (level * 400), 5000); 
             const intervalStep = 100; 
             const decreasePerStep = (intervalStep / duration) * 100;
 
@@ -311,7 +342,7 @@
 
         async function playHint() {
             isGameActive = false;
-            startBtn.style.visibility = 'hidden';
+            retryOverlay.classList.remove('active'); // やり直し画面を隠す
             messageDisplay.innerText = "星座の かたちを おぼえてね...";
             clearInterval(timeInterval);
             timeBar.style.width = '100%';
@@ -321,7 +352,6 @@
             drawSvgLine(playerLine, []);
             drawSvgLine(guidePath, []);
 
-            // 画面描写完了を少し待ってから座標計算
             setTimeout(() => { cachePadPositions(); }, 50);
 
             trapPads.forEach(t => pads[t].classList.add('trap'));
@@ -329,7 +359,7 @@
             pads[currentRoute[currentRoute.length - 1]].classList.add('goal');
 
             let currentHintRoute = [];
-            let speed = (currentRoute.length > 10) ? 160 : 240;
+            let speed = (currentRoute.length > 10) ? 150 : 230;
 
             for (let i = 0; i < currentRoute.length; i++) {
                 await new Promise(r => setTimeout(r, speed));
@@ -374,21 +404,22 @@
             isGameActive = false; isDrawing = false;
             clearInterval(timeInterval);
             messageDisplay.innerText = msg;
-            startBtn.innerText = "もういちど挑戦";
-            startBtn.style.visibility = 'visible';
+            
+            // 🆕 ポップアップ画面を中央に出現させる
+            retryTitle.innerText = msg;
+            retryOverlay.classList.add('active');
+            
             pads.forEach(p => p.classList.remove('active'));
             drawSvgLine(playerLine, []);
         }
 
-        // 🆕【超快適化】数式による当たり判定ロジック
-        // 指の座標から、一番近いマスを計算して返す機能
+        // 🛠️【完全修正】iPhoneの指先でも快適になぞれる黄金バランスの当たり判定
         function getClosestPadFromCoords(clientX, clientY) {
-            // 難易度ごとにタッチ判定の有効半径(しきい値)を設定
-            // 4x4なら広く、10x10ならやや狭く自動調整
-            let touchRadius = 26; 
-            if (gridSize === 6)  touchRadius = 22;
-            if (gridSize === 8)  touchRadius = 18;
-            if (gridSize === 10) touchRadius = 15;
+            // マスの細かさに応じて、なぞり判定の範囲を最適化
+            let touchRadius = 32; // 4x4
+            if (gridSize === 6)  touchRadius = 26;
+            if (gridSize === 8)  touchRadius = 22;
+            if (gridSize === 10) touchRadius = 18;
 
             let closestIndex = null;
             let minDistance = Infinity;
@@ -397,10 +428,11 @@
                 const pos = padPositions[i];
                 if (!pos) continue;
 
-                // 指の現在地と各マスの中心点の距離を計算
                 const dx = clientX - pos.clientX;
                 const dy = clientY - pos.clientY;
-                const distance = Math.sqrt(dx * dx + dx * dy); // 距離の算出法
+                
+                // 🛠️ バグ修正：正しい2点間の距離の公式（三平方の定理）に修正
+                const distance = Math.sqrt(dx * dx + dy * dy); 
 
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -408,11 +440,10 @@
                 }
             }
 
-            // 💡判定を緩く拡張！
-            // 一番近いマスとの距離が、設定した有効半径以内なら「触れた」とみなす
+            // 有効半径以内に入っていればタッチ成功とみなす
             if (minDistance < touchRadius) {
-                // ただしお邪魔マスの場合は、理不尽さをなくすためにより中心に近い(半径の半分)ときだけ判定
-                if (trapPads.includes(closestIndex) && minDistance > touchRadius * 0.5) {
+                // 罠マス（オレンジ）は判定をかなり小さくして、ギリギリを通り抜けられるようにガード
+                if (trapPads.includes(closestIndex) && minDistance > touchRadius * 0.4) {
                     return null; 
                 }
                 return closestIndex;
@@ -439,9 +470,7 @@
             const lastIndex = playerPath[playerPath.length - 1];
             if (index === lastIndex) return;
 
-            // 隣り合うマスへの移動だけを許可するガード処理
             if (getAdjacentPads(lastIndex).includes(index)) {
-                // 1つ前のマスに戻る（やり直し）操作
                 if (playerPath.length > 1 && index === playerPath[playerPath.length - 2]) {
                     pads[lastIndex].classList.remove('active');
                     playerPath.pop();
@@ -449,7 +478,6 @@
                     playConstellationTone(index);
                     return;
                 }
-                // 新しいマスに進む操作
                 if (!playerPath.includes(index)) {
                     playerPath.push(index);
                     pads[index].classList.add('active');
@@ -484,27 +512,28 @@
             }
         }
 
-        // 📱 タッチイベント（数式ロジックへ橋渡し）
-        document.getElementById('game-outer').addEventListener('touchstart', (e) => {
+        // 画面外のタッチ感知エリア
+        const outerArea = document.getElementById('game-outer');
+
+        outerArea.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const t = e.touches[0];
             const idx = getClosestPadFromCoords(t.clientX, t.clientY);
             drawStart(idx);
         }, { passive: false });
 
-        document.getElementById('game-outer').addEventListener('touchmove', (e) => {
+        outerArea.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const t = e.touches[0];
             const idx = getClosestPadFromCoords(t.clientX, t.clientY);
             drawMove(idx);
         }, { passive: false });
 
-        document.getElementById('game-outer').addEventListener('touchend', (e) => {
+        outerArea.addEventListener('touchend', (e) => {
             e.preventDefault(); drawEnd();
         }, false);
 
-        // 💻 マウスイベント（PCブラウザ用テスト）
-        document.getElementById('game-outer').addEventListener('mousedown', (e) => {
+        outerArea.addEventListener('mousedown', (e) => {
             e.preventDefault();
             const idx = getClosestPadFromCoords(e.clientX, e.clientY);
             drawStart(idx);
