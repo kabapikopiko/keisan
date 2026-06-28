@@ -3,182 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>フラッシュあんざん タイムアタック</title>
+    <title>スーパープラチナ フラッシュあんざん</title>
     <style>
         html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            position: fixed;
-            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); 
+            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; position: fixed;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); 
             font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
+            user-select: none; -webkit-user-select: none;
         }
 
-        /* メメニューボタン：アニメーションで消えるように transition を追加 */
         .back-to-menu {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background-color: #ffffff;
-            color: #27ae60;
-            border: 3px solid #5cd18a;
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 14px;
-            font-weight: bold;
-            text-decoration: none;
-            box-shadow: 0 4px 0 #219653;
-            z-index: 10;
-            transition: opacity 0.2s ease, visibility 0.2s; /* フワッと消える演出 */
+            position: absolute; top: 15px; left: 15px; background-color: #ffffff; color: #2980b9;
+            border: 3px solid #3498db; padding: 6px 14px; border-radius: 30px; font-size: 14px; font-weight: bold;
+            text-decoration: none; box-shadow: 0 4px 0 #2980b9; z-index: 10;
+            transition: opacity 0.2s ease, visibility 0.2s; touch-action: manipulation;
         }
-        .back-to-menu:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #219653;
-        }
-        
-        /* ボタンを隠すためのクラス */
-        .hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
+        .back-to-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #2980b9; }
+        .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 
-        .wrapper {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            box-sizing: border-box;
-        }
+        .wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
 
         #game-container {
-            text-align: center;
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 35px; 
-            border: 6px solid #5cd18a; 
-            box-shadow: 0 10px 0 #219653, 0 15px 30px rgba(0,0,0,0.15);
-            width: 100%;
-            max-width: 340px;
-            height: 92vh;
-            max-height: 580px; 
-            box-sizing: border-box;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            text-align: center; background: #ffffff; padding: 15px; border-radius: 35px; 
+            border: 6px solid #3498db; box-shadow: 0 10px 0 #2980b9, 0 15px 30px rgba(0,0,0,0.15);
+            width: 100%; max-width: 340px; height: 92vh; max-height: 580px; box-sizing: border-box;
+            position: relative; display: flex; flex-direction: column; justify-content: space-between;
         }
 
-        .game-header h2 {
-            margin: 0 0 5px 0;
-            color: #1e7e34;
-            font-size: 19px;
-            text-shadow: 1px 1px 0 white;
-        }
-
-        #history-board {
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-bottom: 5px;
-        }
-
-        .dot {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background-color: #f1f2f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            color: #a4b0be;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .dot.current { border: 2px solid #2ecc71; background-color: #fff; color: #2ecc71; transform: scale(1.05); }
-        .dot.o { background-color: #ff4757; color: white; box-shadow: 0 2px 0 #ff6b81; }
-        .dot.x { background-color: #54a0ff; color: white; box-shadow: 0 2px 0 #70a1ff; }
-
-        #setup-screen {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-        .setup-group {
-            width: 100%;
-            background: #f7f9fa;
-            padding: 12px;
-            border-radius: 20px;
-            border: 2px dashed #bdf2d5;
-            box-sizing: border-box;
-        }
-        .setup-group p { margin: 0 0 10px 0; font-weight: bold; color: #2c3e50; font-size: 16px;}
-        .radio-tile-group { display: flex; gap: 10px; justify-content: center; }
+        #setup-screen { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; overflow-y: auto; }
+        #setup-screen h2 { margin: 0 0 5px 0; color: #2c3e50; font-size: 22px; }
+        
+        .setup-group { width: 100%; background: #f7f9fa; padding: 8px; border-radius: 15px; border: 2px dashed #95a5a6; box-sizing: border-box; }
+        .setup-group p { margin: 0 0 6px 0; font-weight: bold; color: #34495e; font-size: 14px; }
+        .radio-tile-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
         .radio-btn { display: none; }
         .radio-label {
-            background: white; border: 3px solid #dcdde1; padding: 10px 20px; border-radius: 15px;
-            font-size: 18px; font-weight: bold; color: #2f3640; cursor: pointer; transition: 0.1s;
-            box-shadow: 0 3px 0 #dcdde1;
+            background: white; border: 2px solid #bdc3c7; padding: 6px 12px; border-radius: 10px;
+            font-size: 15px; font-weight: bold; color: #7f8c8d; cursor: pointer; transition: 0.1s;
+            box-shadow: 0 2px 0 #bdc3c7; touch-action: manipulation;
         }
         .radio-btn:checked + .radio-label {
-            background: #2ecc71; border-color: #27ae60; color: white; box-shadow: 0 3px 0 #219653;
+            background: #3498db; border-color: #2980b9; color: white; box-shadow: 0 2px 0 #1c5980;
         }
+
         .btn-start {
-            background-color: #ff9f43; color: white; border: none; padding: 15px 30px;
-            font-size: 22px; font-weight: bold; border-radius: 50px; border-bottom: 6px solid #e67e22;
-            cursor: pointer; width: 100%; box-shadow: 0 6px 15px rgba(255, 159, 67, 0.3); margin-top: 10px;
+            background-color: #2ecc71; color: white; border: none; padding: 12px 30px;
+            font-size: 22px; font-weight: bold; border-radius: 50px; border-bottom: 6px solid #27ae60;
+            cursor: pointer; width: 100%; box-shadow: 0 6px 15px rgba(46, 204, 113, 0.3); margin-top: 5px;
+            touch-action: manipulation;
         }
         .btn-start:active { transform: translateY(4px); border-bottom-width: 2px; }
 
         #play-screen { display: none; height: 100%; flex-direction: column; justify-content: space-between; }
+        .game-header h2 { margin: 0 0 5px 0; color: #2c3e50; font-size: 16px; }
+
+        #history-board { display: flex; justify-content: center; gap: 4px; margin-bottom: 5px; }
+        .dot {
+            width: 24px; height: 24px; border-radius: 50%; background-color: #f1f2f6;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: bold; color: #a4b0be; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .dot.current { border: 2px solid #3498db; background-color: #fff; color: #3498db; transform: scale(1.05); }
+        .dot.o { background-color: #2ecc71; color: white; box-shadow: 0 2px 0 #27ae60; }
+        .dot.x { background-color: #e74c3c; color: white; box-shadow: 0 2px 0 #c0392b; }
 
         .question-zone {
-            background-color: #2c3e50; 
-            border-radius: 25px;
-            margin: 10px 0;
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100px;
-            box-shadow: inset 0 5px 15px rgba(0,0,0,0.3);
-            position: relative;
+            background-color: #2c3e50; border-radius: 25px; margin: 10px 0; flex-grow: 1;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 120px; box-shadow: inset 0 5px 15px rgba(0,0,0,0.3); position: relative;
         }
 
-        #flash-num {
-            font-size: 70px;
-            font-weight: bold;
-            color: #f1c40f; 
-            text-shadow: 0 2px 10px rgba(241, 196, 15, 0.3);
-        }
+        #flash-container { display: flex; align-items: center; justify-content: center; gap: 20px; }
+        #flash-num { font-size: 75px; font-weight: bold; color: #f1c40f; text-shadow: 0 2px 10px rgba(241, 196, 15, 0.4); }
+        
+        /* 🧮 そろばん残像ガイドのスタイル */
+        #soroban-guide { width: 45px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; background: #34495e; padding: 4px; border-radius: 6px; border: 2px solid #edf2f7; opacity: 0.7; }
+        .soroban-row { display: flex; justify-content: center; position: relative; width: 100%; }
+        .soroban-beam { height: 4px; background: #edf2f7; width: 100%; margin: 2px 0; }
+        .bead { width: 22px; height: 10px; background: #e67e22; border-radius: 4px; border: 1px solid #d35400; }
+        .bead.hidden-bead { opacity: 0.1; }
 
-        #answer-row {
-            display: none; 
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            animation: pop 0.2s ease-out;
-        }
+        #answer-row { display: none; justify-content: center; align-items: center; gap: 12px; animation: pop 0.2s ease-out; }
         #answer-display {
-            font-size: 50px; font-weight: bold; width: 130px; height: 65px; line-height: 60px;
-            border-bottom: 6px solid #2ecc71; color: #2ecc71; text-align: center; background-color: #fff;
-            border-radius: 8px 8px 0 0;
+            font-size: 50px; font-weight: bold; width: 140px; height: 65px; line-height: 60px;
+            border-bottom: 6px solid #3498db; color: #3498db; text-align: center; background-color: #fff; border-radius: 8px 8px 0 0;
         }
 
         .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
         .key {
             background-color: #f5f6fa; border: none; border-bottom: 5px solid #dcdde1; border-radius: 15px;
             font-size: 26px; font-weight: bold; color: #2f3640; padding: 10px 0; cursor: pointer; transition: 0.05s;
+            touch-action: manipulation;
         }
         .key:active { transform: translateY(3px); border-bottom-width: 2px; }
         .key-num { background-color: #fff; border-bottom-color: #ced6e0; }
@@ -186,8 +101,7 @@
         .key-enter { grid-column: span 2; background-color: #2ed573; border-bottom-color: #26af5f; color: white; font-size: 22px; }
 
         #flash-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(255,255,255,0.95); border-radius: 29px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.1s ease;
@@ -197,13 +111,12 @@
         #flash-text { font-size: 22px; font-weight: bold; margin-top: 10px; }
 
         #result-screen { display: none; height: 100%; flex-direction: column; justify-content: center; align-items: center; }
-        #result-screen.active { display: flex; }
         .time-label { font-size: 18px; color: #7f8c8d; margin-bottom: 5px; }
-        .time-text { font-size: 42px; color: #27ae60; font-weight: bold; margin-bottom: 15px; text-shadow: 1px 1px 0 white; }
+        .time-text { font-size: 42px; color: #2980b9; font-weight: bold; margin-bottom: 15px; text-shadow: 1px 1px 0 white; }
         .btn-restart {
             background-color: #2ed573; color: white; border: none; padding: 14px 28px; font-size: 20px; font-weight: bold;
             border-radius: 50px; border-bottom: 6px solid #26af5f; cursor: pointer; width: 100%;
-            box-shadow: 0 6px 15px rgba(46, 213, 115, 0.3);
+            box-shadow: 0 6px 15px rgba(46, 213, 115, 0.3); touch-action: manipulation;
         }
 
         .particle { position: absolute; pointer-events: none; border-radius: 50%; z-index: 999; }
@@ -212,7 +125,6 @@
 </head>
 <body>
 
-<!-- id="back-btn" を追加 -->
 <a href="index.html" id="back-btn" class="back-to-menu" onclick="playSound('click')">🏠 メニュー</a>
 
 <div class="wrapper">
@@ -223,70 +135,85 @@
         </div>
 
         <div id="setup-screen">
-            <h2>🔢 フラッシュあんざん</h2>
+            <h2>🧮 右脳をきたえるフラッシュ</h2>
             
             <div class="setup-group">
-                <p>💡 けた数をえらんでね</p>
+                <p>💡 けた数</p>
                 <div class="radio-tile-group">
                     <input type="radio" name="digits" id="d1" class="radio-btn" value="1" checked>
                     <label class="radio-label" for="d1">1桁</label>
-                    
                     <input type="radio" name="digits" id="d2" class="radio-btn" value="2">
                     <label class="radio-label" for="d2">2桁</label>
                 </div>
             </div>
 
             <div class="setup-group">
-                <p>⚡️ すうじの数をえらんでね</p>
+                <p>⚡️ すうじの数（コンボ）</p>
                 <div class="radio-tile-group">
                     <input type="radio" name="counts" id="c2" class="radio-btn" value="2">
                     <label class="radio-label" for="c2">2回</label>
-                    
                     <input type="radio" name="counts" id="c3" class="radio-btn" value="3" checked>
                     <label class="radio-label" for="c3">3回</label>
-                    
                     <input type="radio" name="counts" id="c5" class="radio-btn" value="5">
                     <label class="radio-label" for="c5">5回</label>
                 </div>
             </div>
 
-            <button class="btn-start" onclick="initGame()">スタート！</button>
+            <div class="setup-group">
+                <p>🚀 すうじが出るスピード（秒）</p>
+                <div class="radio-tile-group">
+                    <input type="radio" name="speed" id="s_slow" class="radio-btn" value="800">
+                    <label class="radio-label" for="s_slow">0.8秒 (のんびり)</label>
+                    <input type="radio" name="speed" id="s_mid" class="radio-btn" value="500" checked>
+                    <label class="radio-label" for="s_mid">0.5秒 (ふつう)</label>
+                    <input type="radio" name="speed" id="s_fast" class="radio-btn" value="250">
+                    <label class="radio-label" for="s_fast">0.25秒 (プロ級!)</label>
+                </div>
+            </div>
+
+            <div class="setup-group">
+                <p>🧮 そろばんの玉ヒント（残像トレーニング）</p>
+                <div class="radio-tile-group">
+                    <input type="radio" name="guide" id="g_on" class="radio-btn" value="on" checked>
+                    <label class="radio-label" for="g_on">つける</label>
+                    <input type="radio" name="guide" id="g_off" class="radio-btn" value="off">
+                    <label class="radio-label" for="g_off">なし</label>
+                </div>
+            </div>
+
+            <button class="btn-start" onclick="initGame()">トレーニング開始！</button>
         </div>
 
         <div id="play-screen">
             <div class="game-header">
                 <h2 id="mode-title">⏱️ フラッシュあんざん</h2>
                 <div id="history-board">
-                    <div class="dot" id="dot-0">1</div>
-                    <div class="dot" id="dot-1">2</div>
-                    <div class="dot" id="dot-2">3</div>
-                    <div class="dot" id="dot-3">4</div>
-                    <div class="dot" id="dot-4">5</div>
-                    <div class="dot" id="dot-5">6</div>
-                    <div class="dot" id="dot-6">7</div>
-                    <div class="dot" id="dot-7">8</div>
-                    <div class="dot" id="dot-8">9</div>
-                    <div class="dot" id="dot-9">10</div>
+                    <div class="dot" id="dot-0">1</div><div class="dot" id="dot-1">2</div><div class="dot" id="dot-2">3</div><div class="dot" id="dot-3">4</div><div class="dot" id="dot-4">5</div>
+                    <div class="dot" id="dot-5">6</div><div class="dot" id="dot-6">7</div><div class="dot" id="dot-7">8</div><div class="dot" id="dot-8">9</div><div class="dot" id="dot-9">10</div>
                 </div>
             </div>
             
             <div class="question-zone">
-                <div id="flash-num">3</div>
+                <div id="flash-container">
+                    <div id="flash-num"></div>
+                    <div id="soroban-guide">
+                        <div class="soroban-row"><div class="bead" id="bead-5"></div></div>
+                        <div class="soroban-beam"></div>
+                        <div class="soroban-row"><div class="bead" id="bead-1"></div></div>
+                        <div class="soroban-row"><div class="bead" id="bead-2"></div></div>
+                        <div class="soroban-row"><div class="bead" id="bead-3"></div></div>
+                        <div class="soroban-row"><div class="bead" id="bead-4"></div></div>
+                    </div>
+                </div>
                 <div id="answer-row">
                     <div id="answer-display"></div>
                 </div>
             </div>
 
             <div class="keyboard">
-                <button class="key key-num" onclick="pressKey('1')">1</button>
-                <button class="key key-num" onclick="pressKey('2')">2</button>
-                <button class="key key-num" onclick="pressKey('3')">3</button>
-                <button class="key key-num" onclick="pressKey('4')">4</button>
-                <button class="key key-num" onclick="pressKey('5')">5</button>
-                <button class="key key-num" onclick="pressKey('6')">6</button>
-                <button class="key key-num" onclick="pressKey('7')">7</button>
-                <button class="key key-num" onclick="pressKey('8')">8</button>
-                <button class="key key-num" onclick="pressKey('9')">9</button>
+                <button class="key key-num" onclick="pressKey('1')">1</button><button class="key key-num" onclick="pressKey('2')">2</button><button class="key key-num" onclick="pressKey('3')">3</button>
+                <button class="key key-num" onclick="pressKey('4')">4</button><button class="key key-num" onclick="pressKey('5')">5</button><button class="key key-num" onclick="pressKey('6')">6</button>
+                <button class="key key-num" onclick="pressKey('7')">7</button><button class="key key-num" onclick="pressKey('8')">8</button><button class="key key-num" onclick="pressKey('9')">9</button>
                 <button class="key key-num" onclick="pressKey('0')">0</button>
                 <button class="key key-clear" onclick="pressKey('clear')">けす</button>
                 <button class="key key-enter" onclick="pressKey('enter')">こたえる</button>
@@ -294,7 +221,7 @@
         </div>
 
         <div id="result-screen">
-            <h2>🎉 チャレンジ終了！</h2>
+            <h2>🎉 トレーニング終了！</h2>
             <div class="time-label">かかった時間</div>
             <div class="time-text" id="final-time">00秒00</div>
             <p id="final-score" style="font-size: 18px; font-weight: bold; color: #57606f; margin-bottom: 20px;"></p>
@@ -304,26 +231,18 @@
 </div>
 
 <script>
-    let numDigits = 1;
-    let numCounts = 3;
-    let speedMs = 700;  
-    let blankMs = 300;  
-
-    let currentQuestionIndex = 0;
-    let correctCount = 0;
-    let currentInput = "";
-    let startTime = 0;
-    let lockInput = false;
-    let currentNumbers = [];
-    let correctAnswer = 0;
+    let numDigits = 1; let numCounts = 3; let speedMs = 500; let blankMs = 200;
+    let currentQuestionIndex = 0; let correctCount = 0; let currentInput = "";
+    let startTime = 0; let lockInput = false; let currentNumbers = []; let correctAnswer = 0; let useGuide = true;
 
     const totalQuestions = 10;
 
-    const backBtn = document.getElementById('back-btn'); // メニューボタン要素
+    const backBtn = document.getElementById('back-btn');
     const setupScreen = document.getElementById('setup-screen');
     const playScreen = document.getElementById('play-screen');
     const resultScreen = document.getElementById('result-screen');
     const flashNumEl = document.getElementById('flash-num');
+    const sorobanGuideEl = document.getElementById('soroban-guide');
     const answerRow = document.getElementById('answer-row');
     const answerDisplayEl = document.getElementById('answer-display');
     const flashOverlay = document.getElementById('flash-overlay');
@@ -336,216 +255,150 @@
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        const now = audioCtx.currentTime;
-
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
         if (type === 'click') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
-            gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-            osc.start(now); osc.stop(now + 0.08);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08); osc.start(now); osc.stop(now + 0.08);
         } else if (type === 'correct') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.08);
-            gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(now); osc.stop(now + 0.3);
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.08); gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
         } else if (type === 'incorrect') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(140, now); osc.frequency.linearRampToValueAtTime(120, now + 0.25);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-            osc.start(now); osc.stop(now + 0.25);
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(140, now); osc.frequency.linearRampToValueAtTime(120, now + 0.25); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25); osc.start(now); osc.stop(now + 0.25);
         } else if (type === 'tick') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(800, now);
-            gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-            osc.start(now); osc.stop(now + 0.05);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05); osc.start(now); osc.stop(now + 0.05);
         }
+    }
+
+    function drawSoroban(num) {
+        if(!useGuide || numDigits > 1) { sorobanGuideEl.style.display = 'none'; return; }
+        sorobanGuideEl.style.display = 'flex';
+        
+        // 1桁の数字（0〜9）をそろばん玉に変換
+        const n = num % 10;
+        const has5 = n >= 5;
+        const lowerCount = n % 5;
+
+        document.getElementById('bead-5').className = has5 ? "bead" : "bead hidden-bead";
+        for(let i=1; i<=4; i++) {
+            document.getElementById(`bead-${i}`).className = i <= lowerCount ? "bead" : "bead hidden-bead";
+        }
+    }
+
+    function clearSoroban() {
+        document.getElementById('bead-5').className = "bead hidden-bead";
+        for(let i=1; i<=4; i++) { document.getElementById(`bead-${i}`).className = "bead hidden-bead"; }
     }
 
     function createParticles() {
         const colors = ['#2ecc71', '#ffca28', '#00b0ff', '#ff4757', '#e056fd'];
         for (let i = 0; i < 25; i++) {
-            const p = document.createElement('div'); p.className = 'particle';
-            const size = Math.random() * 8 + 4;
-            p.style.width = `${size}px`; p.style.height = `${size}px`;
-            p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            p.style.left = '50%'; p.style.top = '40%';
-            document.body.appendChild(p);
-            const angle = Math.random() * Math.PI * 2, v = Math.random() * 140 + 70;
-            const dx = Math.cos(angle) * v, dy = Math.sin(angle) * v - 20;
+            const p = document.createElement('div'); p.className = 'particle'; const size = Math.random() * 8 + 4;
+            p.style.width = `${size}px`; p.style.height = `${size}px`; p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; p.style.left = '50%'; p.style.top = '40%'; document.body.appendChild(p);
+            const angle = Math.random() * Math.PI * 2, v = Math.random() * 140 + 70; const dx = Math.cos(angle) * v, dy = Math.sin(angle) * v - 20;
             const anim = p.animate([{ transform: 'translate(-50%, -50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0)`, opacity: 0 }], { duration: 500, easing: 'cubic-bezier(0.1, 0.8, 0.25, 1)', fill: 'forwards' });
             anim.onfinish = () => p.remove();
         }
     }
 
-    function showSetup() {
-        resultScreen.style.display = 'none';
-        setupScreen.style.display = 'flex';
-        backBtn.classList.remove('hidden'); // 設定画面ではメニューを表示
-    }
+    function showSetup() { resultScreen.style.display = 'none'; setupScreen.style.display = 'flex'; backBtn.classList.remove('hidden'); }
 
     function initGame() {
         playSound('click');
-        
         numDigits = parseInt(document.querySelector('input[name="digits"]:checked').value);
         numCounts = parseInt(document.querySelector('input[name="counts"]:checked').value);
+        speedMs = parseInt(document.querySelector('input[name="speed"]:checked').value);
+        useGuide = document.querySelector('input[name="guide"]:checked').value === "on";
+        blankMs = Math.floor(speedMs * 0.4); // スピードに比例してブランクを調整
 
-        if (numDigits === 1) {
-            speedMs = numCounts === 5 ? 500 : 700;
-            blankMs = 300;
-        } else {
-            speedMs = numCounts === 5 ? 400 : 600;
-            blankMs = 250;
-        }
-
-        currentQuestionIndex = 0;
-        correctCount = 0;
-        lockInput = true; 
+        currentQuestionIndex = 0; correctCount = 0; lockInput = true; 
 
         for (let i = 0; i < totalQuestions; i++) {
-            const dot = document.getElementById(`dot-${i}`);
-            dot.className = "dot"; dot.innerText = i + 1;
+            const dot = document.getElementById(`dot-${i}`); dot.className = "dot"; dot.innerText = i + 1;
         }
 
-        setupScreen.style.display = 'none';
-        playScreen.style.display = 'flex';
-        resultScreen.style.display = 'none';
-        flashOverlay.classList.remove('active');
-
-        modeTitle.innerText = `⏱️ フラッシュ (${numDigits}桁・${numCounts}回)`;
+        setupScreen.style.display = 'none'; playScreen.style.display = 'flex'; resultScreen.style.display = 'none'; flashOverlay.classList.remove('active');
+        modeTitle.innerText = `🧮 フラッシュ (${numDigits}桁・${numCounts}回)`;
         startTime = performance.now();
-        
         startQuestionSequence();
     }
 
     function startQuestionSequence() {
-        lockInput = true;
-        currentInput = "";
-        answerDisplayEl.innerText = "";
-        answerRow.style.display = 'none';
-        flashNumEl.style.display = 'block';
+        lockInput = true; currentInput = ""; answerDisplayEl.innerText = ""; answerRow.style.display = 'none';
+        flashNumEl.style.display = 'block'; clearSoroban();
         document.getElementById(`dot-${currentQuestionIndex}`).classList.add('current');
-
-        // 🚨 【ここがポイント】カウントダウン開始と同時にメニューボタンを隠す！
         backBtn.classList.add('hidden');
 
-        let countdown = 3;
-        flashNumEl.innerText = countdown;
-        playSound('tick');
-
+        let countdown = 3; flashNumEl.innerText = countdown; playSound('tick');
         const cdInterval = setInterval(() => {
             countdown--;
             if (countdown > 0) {
-                flashNumEl.innerText = countdown;
-                playSound('tick');
+                flashNumEl.innerText = countdown; playSound('tick');
             } else {
-                clearInterval(cdInterval);
-                flashNumEl.innerText = "GO!";
-                playSound('tick');
+                clearInterval(cdInterval); flashNumEl.innerText = "GO!"; playSound('tick');
                 setTimeout(() => {
                     currentNumbers = generateNumbers();
                     correctAnswer = currentNumbers.reduce((a, b) => a + b, 0);
                     runFlashAnimation(0);
                 }, 400);
             }
-        }, 700); 
+        }, 500); 
     }
 
     function runFlashAnimation(index) {
         if (index < currentNumbers.length) {
             flashNumEl.innerText = currentNumbers[index];
+            drawSoroban(currentNumbers[index]); // 🆕 そろばん画像を表示
             playSound('tick');
             
             setTimeout(() => {
-                flashNumEl.innerText = ""; 
+                flashNumEl.innerText = ""; clearSoroban(); // 消去
                 setTimeout(() => {
                     runFlashAnimation(index + 1);
                 }, blankMs);
             }, speedMs);
         } else {
-            flashNumEl.style.display = 'none';
-            answerRow.style.display = 'flex';
-            lockInput = false;
-
-            // 🚨 【ここがポイント】数字が出終わって答えを入力するときだけメニューを復活！
-            backBtn.classList.remove('hidden');
+            flashNumEl.style.display = 'none'; sorobanGuideEl.style.display = 'none';
+            answerRow.style.display = 'flex'; lockInput = false; backBtn.classList.remove('hidden');
         }
     }
 
     function pressKey(key) {
         if (lockInput) return;
         playSound('click');
-
-        if (key === 'clear') {
-            currentInput = "";
-        } else if (key === 'enter') {
-            checkAnswer();
-            return;
-        } else {
-            if (currentInput.length < 3) {
-                currentInput += key;
-            }
-        }
+        if (key === 'clear') { currentInput = ""; } 
+        else if (key === 'enter') { checkAnswer(); return; } 
+        else { if (currentInput.length < 4) currentInput += key; }
         answerDisplayEl.innerText = currentInput;
     }
 
     function checkAnswer() {
-        const userAnswer = parseInt(currentInput);
-        if (isNaN(userAnswer)) return;
-
-        lockInput = true;
-        const currentDot = document.getElementById(`dot-${currentQuestionIndex}`);
-        currentDot.classList.remove('current');
-
-        // 🚨 答え合わせ中はまた隠す（誤タップ防止）
+        const userAnswer = parseInt(currentInput); if (isNaN(userAnswer)) return;
+        lockInput = true; const currentDot = document.getElementById(`dot-${currentQuestionIndex}`); currentDot.classList.remove('current');
         backBtn.classList.add('hidden');
 
         let isCorrect = (userAnswer === correctAnswer);
-
         if (isCorrect) {
-            playSound('correct');
-            createParticles();
-            currentDot.className = "dot o"; currentDot.innerText = "◯";
-            flashMark.innerText = "💮"; flashText.innerText = "せいかい！";
-            flashText.style.color = "#2ed573";
-            correctCount++;
+            playSound('correct'); createParticles(); currentDot.className = "dot o"; currentDot.innerText = "◯";
+            flashMark.innerText = "💮"; flashText.innerText = "せいかい！"; flashText.style.color = "#2ed573"; correctCount++;
         } else {
-            playSound('incorrect');
-            currentDot.className = "dot x"; currentDot.innerText = "×";
-            flashMark.innerText = "❌"; flashText.innerText = `こたえは 【${correctAnswer}】`;
-            flashText.style.color = "#ff4757";
+            playSound('incorrect'); currentDot.className = "dot x"; currentDot.innerText = "×";
+            flashMark.innerText = "❌"; flashText.innerText = `こたえは 【${correctAnswer}】`; flashText.style.color = "#ff4757";
         }
-
         flashOverlay.classList.add('active');
-
         setTimeout(() => {
-            flashOverlay.classList.remove('active');
-            currentQuestionIndex++;
-
-            if (currentQuestionIndex < totalQuestions) {
-                startQuestionSequence();
-            } else {
-                endGame();
-            }
+            flashOverlay.classList.remove('active'); currentQuestionIndex++;
+            if (currentQuestionIndex < totalQuestions) startQuestionSequence(); else endGame();
         }, 1200); 
     }
 
     function endGame() {
-        const endTime = performance.now();
-        const totalTime = ((endTime - startTime) / 1000).toFixed(2);
-
-        playScreen.style.display = 'none';
-        resultScreen.classList.add('active');
-
-        finalTimeEl.innerText = `${totalTime} 秒`;
-        finalScoreEl.innerText = `${totalQuestions}もん中 ${correctCount}もん せいかい！`;
-
-        // 🚨 ゲーム終了画面ではいつでもメニューに戻れるように表示！
+        const endTime = performance.now(); const totalTime = ((endTime - startTime) / 1000).toFixed(2);
+        playScreen.style.display = 'none'; resultScreen.classList.add('active');
+        finalTimeEl.innerText = `${totalTime} 秒`; finalScoreEl.innerText = `${totalQuestions}もん中 ${correctCount}もん せいかい！`;
         backBtn.classList.remove('hidden');
     }
 
     function generateNumbers() {
-        const nums = [];
-        const min = Math.pow(10, numDigits - 1);
-        const max = Math.pow(10, numDigits) - 1;
+        const nums = []; const min = Math.pow(10, numDigits - 1); const max = Math.pow(10, numDigits) - 1;
         for (let i = 0; i < numCounts; i++) {
             nums.push(Math.floor(Math.random() * (max - min + 1)) + min);
         }
