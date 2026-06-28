@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>みつけよう！光の星座（超サクサク安定版）</title>
+    <title>みつけよう！光の星座（ボタン完全修正版）</title>
     <style>
         html, body {
             width: 100%; height: 100%; margin: 0; padding: 0; 
@@ -93,20 +93,32 @@
         .pad.hint { background-color: #eab308; box-shadow: 0 0 12px #fde047; }
         .pad.active { background-color: #10b981; box-shadow: 0 0 15px #34d399; }
 
-        /* 🆕 リトライ画面：バグを防ぐため、ゲームオーバー時以外は「存在すらさせない（display:none）」ように徹底 */
+        /* 🛠️ 重なりトラブルを100%防ぐため、真の「最前面ポップアップ」に修正 */
         #retry-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(2, 6, 23, 0.95); border-radius: 16px;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 150;
+            z-index: 9999; /* 他のすべての要素より絶対に上にする */
         }
         #retry-overlay.active { display: flex; } 
         #retry-title { font-size: 18px; font-weight: bold; margin-bottom: 25px; color: #f43f5e; text-align: center; line-height: 1.5; padding: 0 20px; }
         
+        /* 🛠️ 横幅と高さをカチッと固定し、スマホの指でも100%空振りしない大型ボタンに変身 */
         .action-btn {
-            padding: 16px 50px; font-size: 18px; font-weight: bold;
-            background-color: #38bdf8; color: #020617; border: none; border-radius: 50px;
-            box-shadow: 0 5px 0 #0284c7; cursor: pointer; transition: 0.05s;
+            display: block !important;
+            width: 240px !important; 
+            height: 55px !important;
+            line-height: 23px !important;
+            font-size: 18px !important; 
+            font-weight: bold !important;
+            background-color: #38bdf8 !important; 
+            color: #020617 !important; 
+            border: none !important; 
+            border-radius: 50px !important;
+            box-shadow: 0 5px 0 #0284c7 !important; 
+            cursor: pointer !important;
+            text-align: center !important;
+            touch-action: manipulation !important; /* ズームバグ防止 */
         }
         .action-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #0284c7; }
     </style>
@@ -142,7 +154,7 @@
         <div id="game-outer">
             <div id="retry-overlay">
                 <div id="retry-title">タイムアップ！</div>
-                <button id="start-btn" class="action-btn">もういちど見る</button>
+                <button id="start-btn" class="action-btn" onclick="playHint()">もういちど見る</button>
             </div>
 
             <svg id="line-svg">
@@ -228,23 +240,20 @@
             });
         }
 
-        // 🎵 【安定化】バグを誘発していた複雑なメロディ配列を廃止！
-        // 通過したマスの位置（インデックス）に基づいて、リアルタイムに綺麗な高周波を自動計算して鳴らします
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSmoothTone(index) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
             
-            // 心地いいハープ・オルゴール風のピコピコ高音階
             const scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
             const freq = scale[index % scale.length] * (Math.floor(index / scale.length) + 1 * 0.5 + 1);
 
             osc.frequency.setValueAtTime(freq > 1200 ? freq / 2 : freq, audioCtx.currentTime); 
             osc.type = 'sine';
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.18);
         }
 
         function getPadCenter(index) {
@@ -266,7 +275,7 @@
             if (level >= 3)  rank = "スピードスター";
             if (level >= 6)  rank = "パズル達人";
             if (level >= 9)  rank = "ネオンキング";
-            rankDisplay.innerText = `割号: ${rank}`;
+            rankDisplay.innerText = `称号: ${rank}`;
         }
 
         function getAdjacentPads(index) {
@@ -338,6 +347,7 @@
 
         async function playHint() {
             isGameActive = false;
+            // 🛠️ ボタンが押されたら、即座にやり直しレイヤーを完全に非表示（タップをジャマさせない）
             retryOverlay.classList.remove('active'); 
             messageDisplay.innerText = "ひかる パネルの ルートを おぼえてね...";
             clearInterval(timeInterval);
@@ -362,7 +372,7 @@
                 pads[currentRoute[i]].classList.add('hint');
                 currentHintRoute.push(currentRoute[i]);
                 drawSvgLine(guidePath, currentHintRoute); 
-                playSmoothTone(currentRoute[i]); // 🆕 音階を滑らかに再生
+                playSmoothTone(currentRoute[i]); 
             }
 
             await new Promise(r => setTimeout(r, 800));
@@ -402,7 +412,8 @@
             messageDisplay.innerHTML = msg;
             
             retryTitle.innerHTML = msg;
-            retryOverlay.classList.add('active'); // 🆕 オーバーレイ画面を表示して前面の物理ボタンのみ有効にする
+            // 🛠️ ポップアップを最前面に出現させる
+            retryOverlay.classList.add('active'); 
             
             pads.forEach(p => p.classList.remove('active'));
             drawSvgLine(playerLine, []);
@@ -513,8 +524,6 @@
         });
 
         window.addEventListener('mouseup', () => { drawEnd(); });
-
-        startBtn.addEventListener('click', () => { playHint(); });
     </script>
 </body>
 </html>
