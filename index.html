@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>たのしい！ゲームメニュー</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .menu-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .menu-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* ボタンの共通スタイル */
+        .menu-btn {
+            display: block;
+            text-decoration: none;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* ゲームごとの色分け */
+        .btn-flash {
+            background-color: #ff9f43;
+            box-shadow: 0 5px 15px rgba(255, 159, 67, 0.4);
+        }
+        .btn-tashi {
+            background-color: #ff6b6b;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        .btn-hiki {
+            background-color: #54a0ff;
+            box-shadow: 0 5px 15px rgba(84, 160, 255, 0.4);
+        }
+
+        .btn-desc {
+            display: block;
+            font-size: 13px;
+            font-weight: normal;
+            margin-top: 5px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="menu-container">
+    <h1>🎮 けいさんゲーム</h1>
+    <p class="subtitle">あそびたいゲームをえらんでね！</p>
+
+    <div class="menu-grid">
+        <a href="flash.html" class="menu-btn btn-flash">
+            🔢 フラッシュあんざん
+            <span class="btn-desc">数字がチカチカでるよ！</span>
+        </a>
+
+        <a href="tashizan.html" class="menu-btn btn-tashi">
+            ➕ たしざんゲーム
+            <span class="btn-desc">たしざんのれんしゅう</span>
+        </a>
+
+        <a href="hikizan.html" class="menu-btn btn-hiki">
+            ➖ ひきざんゲーム
+            <span class="btn-desc">ひきざんのれんしゅう</span>
+        </a>
+    </div>
+</div>
+
+</body>
+</html>
