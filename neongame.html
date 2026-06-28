@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NEON PATH: 究極の光の道</title>
+    <title>みつけよう！光の道（シンプル版）</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,12 +12,13 @@
             -webkit-touch-callout: none;
             touch-action: none;
         }
+        /* 目に優しい、少し温かみのある白（生成り色）背景 */
         body {
             margin: 0;
             padding: 0;
-            background-color: #0d0d11;
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #fcfaf2;
+            color: #333333;
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", メイリオ, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -26,36 +27,26 @@
             overflow: hidden;
         }
         
-        /* エフェクト用キャンバス */
-        #fx-canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 5;
-        }
-
         #header-area {
             text-align: center;
             margin-bottom: 10px;
             z-index: 10;
         }
         #title {
-            font-size: 14px;
-            letter-spacing: 4px;
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #555;
             margin: 0 0 5px 0;
         }
         #score-board {
             font-size: 18px;
-            color: #ff00ff;
-            text-shadow: 0 0 8px #ff00ff;
+            color: #2b6cb0; /* 落ち着いた青 */
             font-weight: bold;
         }
         #title-rank {
-            font-size: 14px;
-            color: #ffcc00;
+            font-size: 13px;
+            color: #666;
             margin-top: 2px;
         }
 
@@ -65,39 +56,36 @@
             z-index: 10;
         }
         #level {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
-            color: #ffffff;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            color: #333;
         }
         #message {
             font-size: 16px;
-            color: #8a8a93;
+            color: #666;
             min-height: 24px;
             margin-top: 5px;
         }
 
-        /* タイムゲージ */
+        /* タイムゲージ（マイルドな色合いに） */
         #time-bar-container {
             width: 80vw;
             max-width: 340px;
-            height: 6px;
-            background: #222;
-            border-radius: 3px;
-            margin-bottom: 20px;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 25px;
             overflow: hidden;
             z-index: 10;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
         #time-bar {
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, #00ffff, #00ff00);
-            box-shadow: 0 0 8px #00ff00;
+            background-color: #3182ce; /* 優しい青 */
             transition: width 0.1s linear;
         }
 
-        /* 4x4ボード */
+        /* 4x4ボード（ノートのような、すっきりしたデザイン） */
         #game-board {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -107,106 +95,87 @@
             aspect-ratio: 1 / 1;
             position: relative;
             z-index: 10;
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* ほんのり影 */
+            border: 2px solid #e2e8f0;
         }
 
-        /* ネオンを強調した玉スタイル */
+        /* マスの基本スタイル（普段は薄いグレーの丸） */
         .pad {
             border-radius: 50%;
             aspect-ratio: 1 / 1;
-            opacity: 0.1;
-            background-color: #fff;
-            box-shadow: inset 0 0 15px rgba(255,255,255,0.2);
+            background-color: #f7fafc;
+            border: 2px solid #e2e8f0;
             position: relative;
             cursor: pointer;
             -webkit-user-drag: none;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
+            transition: transform 0.15s, background-color 0.15s, border-color 0.15s;
         }
 
-        /* 16マスの超鮮やかなネオンカラー */
-        #pad-0  { color: #ff3b30; } #pad-1  { color: #ff9500; } #pad-2  { color: #ffcc00; } #pad-3  { color: #4cd964; }
-        #pad-4  { color: #5ac8fa; } #pad-5  { color: #007aff; } #pad-6  { color: #5856d6; } #pad-7  { color: #b370f2; }
-        #pad-8  { color: #f270b3; } #pad-9  { color: #ff2d55; } #pad-10 { color: #1abc9c; } #pad-11 { color: #2ecc71; }
-        #pad-12 { color: #3498db; } #pad-13 { color: #9b59b6; } #pad-14 { color: #e67e22; } #pad-15 { color: #e74c3c; }
-
-        .pad::before {
-            content: '';
-            position: absolute; top:0; left:0; right:0; bottom:0;
-            border-radius: 50%;
-            background: currentColor;
-            opacity: 0.3;
-        }
-
-        /* スタート・ゴール */
+        /* スタート・ゴールの文字（はっきりと見やすく） */
         .pad.start::after {
-            content: 'START'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-weight: 900; color: #fff; font-size: 11px; text-shadow: 0 0 5px #000;
+            content: 'スタート'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-weight: bold; color: #2b6cb0; font-size: 11px; white-space: nowrap;
         }
         .pad.goal::after {
-            content: 'GOAL'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-weight: 900; color: #fff; font-size: 11px; text-shadow: 0 0 5px #000;
+            content: 'ゴール'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-weight: bold; color: #c53030; font-size: 11px; white-space: nowrap;
         }
 
-        /* お邪魔地雷マス 💀 */
+        /* お邪魔地雷マス ⚠️ （チカチカしない警告色に） */
         .pad.trap {
-            color: #ff0000 !important;
-            opacity: 0.6;
-            background: #200 !important;
-            animation: pulse 1s infinite alternate;
+            background-color: #feebc8 !important; /* 薄いオレンジ */
+            border-color: #dd6b20 !important;
         }
         .pad.trap::after {
-            content: '💀'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 18px;
+            content: '⚠️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 16px;
         }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 5px #ff0000; transform: scale(1); }
-            100% { box-shadow: 0 0 15px #ff0000; transform: scale(0.95); }
-        }
-
-        /* お手本表示 */
+        /* お手本表示（優しいパステル調の黄色） */
         .pad.hint {
-            opacity: 0.8;
+            background-color: #fef08a !important;
+            border-color: #facc15 !important;
             transform: scale(1.05);
-            box-shadow: 0 0 20px currentColor;
         }
 
-        /* なぞり中アクティブ（超発光） */
+        /* なぞり中アクティブ（はっきりとした緑に変化） */
         .pad.active {
-            opacity: 1.0;
-            transform: scale(1.12);
-            box-shadow: 0 0 30px currentColor, inset 0 0 10px #fff;
-            background-color: #fff !important;
+            background-color: #48bb78 !important; /* 爽やかな緑 */
+            border-color: #38a169 !important;
+            transform: scale(1.08);
         }
 
+        /* スタート・リトライボタン */
         #start-btn {
             margin-top: 25px;
             padding: 14px 45px;
             font-size: 18px;
             font-weight: bold;
-            background: linear-gradient(45deg, #00ff00, #00ffff);
-            color: #0d0d11;
+            background-color: #2b6cb0; /* 落ち着いた紺青色 */
+            color: white;
             border: none;
             border-radius: 30px;
-            box-shadow: 0 0 15px rgba(0,255,255,0.4);
+            box-shadow: 0 4px 6px rgba(43, 108, 176, 0.2);
             cursor: pointer;
             z-index: 10;
             transition: 0.2s;
         }
-        #start-btn:active { transform: scale(0.95); box-shadow: 0 0 5px rgba(0,255,255,0.1); }
+        #start-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
-    <canvas id="fx-canvas"></canvas>
-
     <div id="header-area">
-        <div id="title">NEON PATH REVOLUTION</div>
-        <div id="score-board">SCORE: 00000</div>
+        <div id="title">みつけよう！光の道</div>
+        <div id="score-board">スコア: 00000</div>
         <div id="title-rank">称号: はじめての挑戦者</div>
     </div>
 
     <div id="status-area">
-        <div id="level">STAGE 1</div>
+        <div id="level">ステージ 1</div>
         <div id="message">ボタンを押してスタート！</div>
     </div>
 
@@ -221,17 +190,17 @@
         <div class="pad" id="pad-12"></div> <div class="pad" id="pad-13"></div> <div class="pad" id="pad-14"></div> <div class="pad" id="pad-15"></div>
     </div>
 
-    <button id="start-btn">ゲームスタート</button>
+    <button id="start-btn">スタート</button>
 
     <script>
         let currentRoute = [];    
         let playerPath = [];     
-        let trapPads = [];       // お邪魔マスのインデックス
+        let trapPads = [];       
         let level = 1;
         let score = 0;
         let isGameActive = false;
         let isDrawing = false;   
-        let timeLimit = 100;     // ％表示用
+        let timeLimit = 100;     
         let timeInterval = null;
         const GRID_SIZE = 4;     
 
@@ -244,18 +213,6 @@
         const timeBar = document.getElementById('time-bar');
         const board = document.getElementById('game-board');
 
-        // キャンバス設定（パーティクル用）
-        const canvas = document.getElementById('fx-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
         // サウンド設定
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const frequencies = [
@@ -263,7 +220,7 @@
             554.37, 587.33, 622.25, 659.25, 698.46, 739.99, 783.99, 880.00
         ];
 
-        function playTone(index, type='sine', duration=0.25, vol=0.15) {
+        function playTone(index, type='sine', duration=0.25, vol=0.1) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -277,12 +234,12 @@
 
         // 称号の更新
         function updateRank() {
-            let rank = "ひかりのひよこ";
-            if (level >= 3)  rank = "スピード見習い";
-            if (level >= 6)  rank = "電脳パズラー";
-            if (level >= 9)  rank = "ひかりの魔術師";
-            if (level >= 12) rank = "超空間の支配者";
-            if (level >= 15) rank = "ゴッドアイズ（神の目）";
+            let rank = "みならいハンター";
+            if (level >= 3)  rank = "スピードスター";
+            if (level >= 6)  rank = "パズル名人";
+            if (level >= 9)  rank = "ひかりのひらめき";
+            if (level >= 12) rank = "天才ひらめきキッズ";
+            if (level >= 15) rank = "全知全能の目";
             rankDisplay.innerText = `称号: ${rank}`;
         }
 
@@ -297,11 +254,9 @@
             return adj;
         }
 
-        // ルート生成
         function generateRoute(length) {
             const route = [];
             let current = Math.floor(Math.random() * 16);
-            // 最初にお邪魔マスを配置する場合はそこを避ける
             while(trapPads.includes(current)) {
                 current = Math.floor(Math.random() * 16);
             }
@@ -317,7 +272,7 @@
             return route;
         }
 
-        // お邪魔マスの生成（レベル4から登場、最大3個）
+        // お邪魔マス（レベル4から、⚠️マークに）
         function generateTraps() {
             trapPads = [];
             if (level < 4) return;
@@ -330,14 +285,12 @@
             }
         }
 
-        // タイマー開始
         function startTimer() {
             clearInterval(timeInterval);
             timeLimit = 100;
             timeBar.style.width = '100%';
-            timeBar.style.background = 'linear-gradient(90deg, #00ffff, #00ff00)';
+            timeBar.style.backgroundColor = '#3182ce';
             
-            // レベルが上がると時間が短くなる（基本10秒〜最低4秒）
             const duration = Math.max(10000 - (level * 500), 4000); 
             const intervalStep = 100; 
             const decreasePerStep = (intervalStep / duration) * 100;
@@ -347,18 +300,16 @@
                 if (timeLimit <= 0) {
                     timeLimit = 0;
                     timeBar.style.width = '0%';
-                    gameOver("タイムアップ！時間切れだよ");
+                    gameOver("タイムアップ！じかんぎれだよ");
                 } else {
                     timeBar.style.width = `${timeLimit}%`;
                     if (timeLimit < 30) {
-                        timeBar.style.background = '#ff3b30'; // 残り3割で赤く
-                        timeBar.style.boxShadow = '0 0 8px #ff3b30';
+                        timeBar.style.backgroundColor = '#e53e3e'; // 残り3割で赤に
                     }
                 }
             }, intervalStep);
         }
 
-        // お手本再生
         async function playHint() {
             isGameActive = false;
             startBtn.style.visibility = 'hidden';
@@ -368,7 +319,6 @@
 
             pads.forEach(p => p.classList.remove('active', 'hint', 'start', 'goal', 'trap'));
 
-            // 地雷マスの視覚化
             trapPads.forEach(t => pads[t].classList.add('trap'));
 
             pads[currentRoute[0]].classList.add('start');
@@ -377,22 +327,21 @@
             for (let i = 0; i < currentRoute.length; i++) {
                 await new Promise(r => setTimeout(r, 300));
                 pads[currentRoute[i]].classList.add('hint');
-                playTone(currentRoute[i], 'sine', 0.2, 0.15);
-                createSparkleCluster(pads[currentRoute[i]]);
+                playTone(currentRoute[i], 'sine', 0.2, 0.12);
             }
 
             await new Promise(r => setTimeout(r, 600));
             pads.forEach(p => p.classList.remove('hint')); 
             
             isGameActive = true;
-            messageDisplay.innerText = "S から G まで なぞってね！";
+            messageDisplay.innerText = "スタート から ゴール まで なぞってね！";
             startTimer();
         }
 
         function nextLevel() {
-            levelDisplay.innerText = `STAGE ${level}`;
+            levelDisplay.innerText = `ステージ ${level}`;
             updateRank();
-            generateTraps(); // 地雷設置
+            generateTraps(); 
             const routeLength = Math.min(3 + Math.floor(level / 1.5), 11);
             currentRoute = generateRoute(routeLength);
             if (currentRoute.length < 3) return nextLevel(); 
@@ -403,14 +352,13 @@
             isGameActive = false;
             isDrawing = false;
             clearInterval(timeInterval);
-            playTone(2, 'sawtooth', 0.6, 0.2); // ぶーっという音
+            playTone(2, 'sine', 0.5, 0.15); 
             messageDisplay.innerText = msg;
             startBtn.innerText = "もういっかい挑戦";
             startBtn.style.visibility = 'visible';
             pads.forEach(p => p.classList.remove('active'));
         }
 
-        // --- タッチ＆マウス座標取得 ---
         function getElementFromCoords(clientX, clientY) {
             const element = document.elementFromPoint(clientX, clientY);
             if (!element || !element.classList.contains('pad')) return null;
@@ -420,9 +368,8 @@
         function drawStart(index) {
             if (!isGameActive) return;
             
-            // 地雷を踏んだ場合
             if (trapPads.includes(index)) {
-                gameOver("💀 ドクロを踏んじゃった！ゲームオーバー");
+                gameOver("⚠️ 注意マークを踏んじゃった！ゲームオーバー");
                 return;
             }
 
@@ -430,38 +377,31 @@
             isDrawing = true;
             playerPath = [index];
             pads[index].classList.add('active');
-            playTone(index, 'triangle', 0.2, 0.2);
-            createSparkleCluster(pads[index]);
+            playTone(index, 'sine', 0.2, 0.15);
         }
 
-        function drawMove(index, clientX, clientY) {
+        function drawMove(index) {
             if (!isDrawing || index === null) return;
             
-            // 地雷を踏んだ場合
             if (trapPads.includes(index)) {
-                gameOver("💀 ドクロを踏んじゃった！ゲームオーバー");
+                gameOver("⚠️ 注意マークを踏んじゃった！ゲームオーバー");
                 return;
             }
 
             const lastIndex = playerPath[playerPath.length - 1];
-            if (index === lastIndex) {
-                // 移動中に火花を散らす
-                createParticle(clientX, clientY, window.getComputedStyle(pads[index]).backgroundColor);
-                return;
-            }
+            if (index === lastIndex) return;
 
             if (getAdjacentPads(lastIndex).includes(index)) {
                 if (playerPath.length > 1 && index === playerPath[playerPath.length - 2]) {
                     pads[lastIndex].classList.remove('active');
                     playerPath.pop();
-                    playTone(index, 'triangle', 0.15, 0.2);
+                    playTone(index, 'sine', 0.15, 0.15);
                     return;
                 }
                 if (!playerPath.includes(index)) {
                     playerPath.push(index);
                     pads[index].classList.add('active');
-                    playTone(index, 'triangle', 0.2, 0.2);
-                    createSparkleCluster(pads[index]);
+                    playTone(index, 'sine', 0.2, 0.15);
                 }
             }
         }
@@ -476,20 +416,12 @@
 
             if (isCorrect) {
                 isGameActive = false;
-                // スコア計算（残り時間ボーナス）
                 const bonus = Math.floor(timeLimit * 10);
                 score += 100 + bonus;
-                scoreDisplay.innerText = `SCORE: ${String(score).padStart(5, '0')}`;
+                scoreDisplay.innerText = `スコア: ${String(score).padStart(5, '0')}`;
 
-                messageDisplay.innerText = `CLEAR! スコア+${100 + bonus}`;
-                playTone(7, 'sine', 0.15, 0.2);
-                setTimeout(() => playTone(11, 'sine', 0.3, 0.2), 100);
-
-                // 全体に大爆発パーティクル
-                for(let i=0; i<40; i++) {
-                    createParticle(window.innerWidth/2, window.innerHeight/3, '#00ffff');
-                    createParticle(window.innerWidth/2, window.innerHeight/3, '#ff00ff');
-                }
+                messageDisplay.innerText = `せいかい！ スコア+${100 + bonus}`;
+                playTone(7, 'sine', 0.15, 0.15);
 
                 level++;
                 setTimeout(nextLevel, 1200);
@@ -497,62 +429,6 @@
                 gameOver("ルートが ちがうよ！もう一度覚えてね");
             }
         }
-
-        // --- パーティクル演出システム（Canvas） ---
-        function createParticle(x, y, color) {
-            particles.push({
-                x: x, y: y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8,
-                alpha: 1,
-                size: Math.random() * 4 + 2,
-                color: color
-            });
-        }
-
-        function createSparkleCluster(el) {
-            const rect = el.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            const color = window.getComputedStyle(el).backgroundColor;
-            for (let i = 0; i < 12; i++) {
-                createParticle(cx, cy, color);
-            }
-        }
-
-        function updateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vx *= 0.96; // 摩擦
-                p.vy *= 0.96;
-                p.alpha -= 0.03; // フェードアウト
-
-                if (p.alpha <= 0) {
-                    particles.splice(i, 1);
-                    continue;
-                }
-
-                ctx.save();
-                ctx.globalAlpha = p.alpha;
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = p.color;
-                ctx.fillStyle = '#ffffff'; // 芯は白く輝かせる
-                ctx.beginPath();
-                // 星型っぽくダイヤ型に描画
-                ctx.moveTo(p.x, p.y - p.size);
-                ctx.lineTo(p.x + p.size, p.y);
-                ctx.lineTo(p.x, p.y + p.size);
-                ctx.lineTo(p.x - p.size, p.y);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
-            }
-            requestAnimationFrame(updateParticles);
-        }
-        updateParticles();
 
         // --- イベント登録（スマホ＆PC兼用） ---
         board.addEventListener('touchstart', (e) => {
@@ -565,7 +441,7 @@
             e.preventDefault();
             const t = e.touches[0];
             const idx = getElementFromCoords(t.clientX, t.clientY);
-            drawMove(idx, t.clientX, t.clientY);
+            drawMove(idx);
         }, { passive: false });
 
         board.addEventListener('touchend', (e) => {
@@ -582,7 +458,7 @@
         window.addEventListener('mousemove', (e) => {
             if (!isDrawing) return;
             const idx = getElementFromCoords(e.clientX, e.clientY);
-            drawMove(idx, e.clientX, e.clientY);
+            drawMove(idx);
         });
 
         window.addEventListener('mouseup', () => {
@@ -593,7 +469,7 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             level = 1;
             score = 0;
-            scoreDisplay.innerText = "SCORE: 00000";
+            scoreDisplay.innerText = "スコア: 00000";
             startBtn.innerText = "もういっかい";
             nextLevel();
         });
