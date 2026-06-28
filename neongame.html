@@ -3,21 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>みつけよう！光の星座（メロディパネル版）</title>
+    <title>みつけよう！光の星座（タッチ完全安定版）</title>
     <style>
+        /* 🛠️ iPhoneの画面の引っ張りバグ（バウンススクロール）をシステムごと完全に禁止 */
+        html, body {
+            width: 100%; height: 100%; margin: 0; padding: 0; 
+            overflow: hidden; position: fixed;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: auto;
+        }
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none;
+            touch-action: none; /* スマホのお節介なズームやスクロールを一切させない */
         }
         body {
-            margin: 0; padding: 0;
             background: linear-gradient(135deg, #020617 0%, #0f052d 100%);
             color: #f8fafc;
             font-family: 'Hiragino Maru Gothic ProN', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; overflow: hidden;
         }
 
         .back-to-menu {
@@ -28,7 +33,7 @@
         }
         .back-to-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #38bdf8; }
         
-        #header-area { text-align: center; margin-bottom: 5px; z-index: 10; margin-top: 30px; }
+        #header-area { text-align: center; margin-bottom: 5px; z-index: 10; margin-top: 20px; }
         #title { font-size: 14px; font-weight: bold; letter-spacing: 4px; color: #94a3b8; margin: 0 0 3px 0; }
         #score-board { font-size: 24px; color: #38bdf8; font-weight: bold; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
         #title-rank { font-size: 12px; color: #64748b; margin-top: 2px; }
@@ -92,20 +97,21 @@
         .pad.hint { background-color: #eab308; box-shadow: 0 0 12px #fde047; }
         .pad.active { background-color: #10b981; box-shadow: 0 0 15px #34d399; }
 
+        /* 🛠️ ボタンの誤作動を防ぐため、透明な壁ではなく、必要のない時は「非表示（display:none）」にする完璧な設計に変更 */
         #retry-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(2, 6, 23, 0.9); border-radius: 16px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 150;
         }
-        #retry-overlay.active { opacity: 1; pointer-events: auto; }
+        #retry-overlay.active { display: flex; } /* ゲームオーバー時だけ出現 */
         #retry-title { font-size: 18px; font-weight: bold; margin-bottom: 25px; color: #f43f5e; text-align: center; line-height: 1.5; padding: 0 20px; }
         
         .action-btn {
             padding: 16px 50px; font-size: 18px; font-weight: bold;
             background-color: #38bdf8; color: #020617; border: none; border-radius: 50px;
             box-shadow: 0 5px 0 #0284c7; cursor: pointer; transition: 0.05s;
-            position: relative; z-index: 160; pointer-events: auto;
+            position: relative; z-index: 160;
         }
         .action-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #0284c7; }
     </style>
@@ -184,7 +190,6 @@
         let pads = [];
         let padPositions = []; 
 
-        // 🎵 正しい音階の周波数（F5バグを修正し、高いファの音[F5]をちゃんと定義しました）
         const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392.00, A4=440.00, B4=493.88, C5=523.25, D5=587.33, E5=659.25, F5=698.46;
         const songMelodies = {
             easy:   [E4, D4, C4, D4, E4, E4, E4], 
@@ -342,7 +347,7 @@
 
         async function playHint() {
             isGameActive = false;
-            retryOverlay.classList.remove('active'); 
+            retryOverlay.classList.remove('active'); // リトライ画面を完全に非表示
             messageDisplay.innerText = "ひかる パネルの メロディを おぼえてね...";
             clearInterval(timeInterval);
             timeBar.style.width = '100%';
@@ -406,7 +411,7 @@
             messageDisplay.innerHTML = msg;
             
             retryTitle.innerHTML = msg;
-            retryOverlay.classList.add('active'); 
+            retryOverlay.classList.add('active'); // オーバーレイを表示
             
             pads.forEach(p => p.classList.remove('active'));
             drawSvgLine(playerLine, []);
@@ -481,6 +486,7 @@
 
         const outerArea = document.getElementById('game-outer');
 
+        // 🛠️ 【修正】iPhoneで指が外にはみ出しても電波を絶対に離さない最強のイベントリスナー構造に進化
         outerArea.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const t = e.touches[0];
@@ -492,13 +498,21 @@
             e.preventDefault();
             const t = e.touches[0];
             const idx = getPadIndexFromCoords(t.clientX, t.clientY);
-            drawMove(idx);
+            // 指が枠外に出て何も取得できないとき（null）でも途切れないようにガード
+            if(idx !== null) { drawMove(idx); }
         }, { passive: false });
 
         outerArea.addEventListener('touchend', (e) => {
             e.preventDefault(); drawEnd();
         }, false);
 
+        // 🛠️ iPhoneが勝手にタッチを無効化する最悪のバグ（touchcancel）が起きたら即座にやり直しとして受け付ける
+        outerArea.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            drawEnd();
+        }, false);
+
+        // マウス用（PC環境）
         outerArea.addEventListener('mousedown', (e) => {
             e.preventDefault();
             const idx = getPadIndexFromCoords(e.clientX, e.clientY);
@@ -508,7 +522,7 @@
         window.addEventListener('mousemove', (e) => {
             if (!isDrawing) return;
             const idx = getPadIndexFromCoords(e.clientX, e.clientY);
-            drawMove(idx);
+            if(idx !== null) { drawMove(idx); }
         });
 
         window.addEventListener('mouseup', () => { drawEnd(); });
