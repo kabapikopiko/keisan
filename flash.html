@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ワクワク！フラッシュ暗算（つづけてチャレンジ）</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+
+        .setup-section, .game-section, .result-section {
+            display: none;
+        }
+
+        .active {
+            display: block;
+        }
+
+        label {
+            display: block;
+            font-size: 16px;
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            background-color: #fff;
+            margin-bottom: 25px;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            border-color: #3498db;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.1s, background-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-start {
+            background-color: #2ecc71;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        .btn-start:hover { background-color: #27ae60; }
+
+        .btn-submit {
+            background-color: #2ecc71;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        .btn-submit:hover { background-color: #27ae60; }
+
+        .btn-next {
+            background-color: #2ecc71;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        .btn-next:hover { background-color: #27ae60; }
+
+        .btn-retry {
+            background-color: #3498db;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        .btn-retry:hover { background-color: #2980b9; }
+
+        /* 中止ボタンのスタイル（目立ちすぎず、でも押しやすい赤色） */
+        .btn-cancel {
+            background-color: #e74c3c;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+            font-size: 15px;
+            padding: 10px 20px;
+            margin-top: 10px;
+            margin-bottom: 0;
+        }
+        .btn-cancel:hover { background-color: #c0392b; }
+
+        /* ゲーム画面の数字表示エリア */
+        .flash-display {
+            background-color: #2c3e50;
+            color: #f1c40f;
+            font-size: 80px;
+            font-weight: bold;
+            height: 180px;
+            line-height: 180px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .input-style {
+            width: 100%;
+            padding: 12px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .result-message {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .correct { color: #e74c3c; }
+        .incorrect { color: #3498db; }
+
+        .score-details {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="setup-section" class="setup-section active">
+        <h1>🔢 フラッシュ暗算</h1>
+        <label for="grade-select">学年をえらんでね：</label>
+        <select id="grade-select">
+            <option value="1">小学1年生 (1桁・3口・ゆっくり)</option>
+            <option value="2">小学2年生 (1桁・5口・ふつう)</option>
+            <option value="3">小学3年生 (2桁・3口・ふつう)</option>
+            <option value="4">小学4年生 (2桁・5口・すこし速い)</option>
+            <option value="5">小学5年生 (3桁・3口・速い)</option>
+            <option value="6">小学6年生 (3桁・5口・とても速い)</option>
+        </select>
+        <button id="start-btn" class="btn-start">スタート！</button>
+    </div>
+
+    <div id="game-section" class="game-section">
+        <h1 id="game-title">画面をみてね！</h1>
+        <div id="flash-display" class="flash-display">3</div>
+        
+        <div id="answer-zone" style="display: none;">
+            <label for="user-answer">こたえは？</label>
+            <input type="number" id="user-answer" class="input-style" placeholder="すうじを入力" pattern="\d*">
+            <button id="submit-btn" class="btn-submit">こたえあわせ</button>
+        </div>
+        
+        <button id="cancel-btn" class="btn-cancel">ちゅうしする</button>
+    </div>
+
+    <div id="result-section" class="result-section">
+        <div id="result-message" class="result-message"></div>
+        <div id="score-details" class="score-details"></div>
+        <button id="next-btn" class="btn-next">つぎの問題へ！</button>
+        <button id="retry-btn" class="btn-retry">学年をえらびなおす</button>
+    </div>
+</div>
+
+<script>
+    const gradeSettings = {
+        1: { digits: 1, numbers: 3, speed: 800, blank: 400 }, 
+        2: { digits: 1, numbers: 5, speed: 700, blank: 300 }, 
+        3: { digits: 2, numbers: 3, speed: 700, blank: 300 }, 
+        4: { digits: 2, numbers: 5, speed: 500, blank: 300 }, 
+        5: { digits: 3, numbers: 3, speed: 400, blank: 200 }, 
+        6: { digits: 3, numbers: 5, speed: 250, blank: 150 }  
+    };
+
+    let currentNumbers = [];
+    let correctAnswer = 0;
+    let currentConfig = {};
+    let countdownTimers = []; // タイマー管理用配列
+
+    const setupSection = document.getElementById('setup-section');
+    const gameSection = document.getElementById('game-section');
+    const resultSection = document.getElementById('result-section');
+    
+    const gradeSelect = document.getElementById('grade-select');
+    const flashDisplay = document.getElementById('flash-display');
+    const answerZone = document.getElementById('answer-zone');
+    const gameTitle = document.getElementById('game-title');
+    const userAnswer = document.getElementById('user-answer');
+    
+    const startBtn = document.getElementById('start-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const retryBtn = document.getElementById('retry-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    
+    const resultMessage = document.getElementById('result-message');
+    const scoreDetails = document.getElementById('score-details');
+
+    function generateNumbers(digits, count) {
+        const nums = [];
+        const min = Math.pow(10, digits - 1);
+        const max = Math.pow(10, digits) - 1;
+        
+        for (let i = 0; i < count; i++) {
+            nums.push(Math.floor(Math.random() * (max - min + 1)) + min);
+        }
+        return nums;
+    }
+
+    // すべてのタイマー（待機処理）をストップさせる関数
+    function clearAllTimers() {
+        countdownTimers.forEach(timer => clearTimeout(timer));
+        countdownTimers = [];
+    }
+
+    function startGame() {
+        clearAllTimers(); // 前のタイマーが残っていればクリア
+        
+        const grade = gradeSelect.value;
+        currentConfig = gradeSettings[grade];
+        currentNumbers = generateNumbers(currentConfig.digits, currentConfig.numbers);
+        correctAnswer = currentNumbers.reduce((a, b) => a + b, 0);
+
+        setupSection.classList.remove('active');
+        resultSection.classList.remove('active');
+        gameSection.classList.add('active');
+        
+        answerZone.style.display = 'none';
+        userAnswer.value = '';
+        gameTitle.textContent = "画面をみてね！";
+
+        let countdown = 3;
+        flashDisplay.textContent = countdown;
+        
+        // カウントダウン処理
+        for (let i = 1; i <= 3; i++) {
+            let t = setTimeout(() => {
+                countdown--;
+                if (countdown > 0) {
+                    flashDisplay.textContent = countdown;
+                } else {
+                    flashDisplay.textContent = "スタート！";
+                    let tStart = setTimeout(() => {
+                        runFlash(0);
+                    }, 500);
+                    countdownTimers.push(tStart);
+                }
+            }, i * 1000);
+            countdownTimers.push(t);
+        }
+    }
+
+    function runFlash(index) {
+        if (index < currentNumbers.length) {
+            flashDisplay.textContent = currentNumbers[index];
+            
+            let tBlank = setTimeout(() => {
+                flashDisplay.textContent = "";
+                let tNext = setTimeout(() => {
+                    runFlash(index + 1);
+                }, currentConfig.blank);
+                countdownTimers.push(tNext);
+            }, currentConfig.speed);
+            
+            countdownTimers.push(tBlank);
+        } else {
+            flashDisplay.textContent = "？";
+            gameTitle.textContent = "計算できたかな？";
+            answerZone.style.display = 'block';
+            userAnswer.focus();
+        }
+    }
+
+    function checkAnswer() {
+        const input = parseInt(userAnswer.value, 10);
+        if (isNaN(input)) {
+            alert('数字を入力してね！');
+            return;
+        }
+
+        clearAllTimers();
+        gameSection.classList.remove('active');
+        resultSection.classList.add('active');
+
+        if (input === correctAnswer) {
+            resultMessage.innerHTML = "🔴 せいかい！ 🔴";
+            resultMessage.className = "result-message correct";
+        } else {
+            resultMessage.innerHTML = "❌ ざんねん！ ❌";
+            resultMessage.className = "result-message incorrect";
+        }
+
+        scoreDetails.innerHTML = `
+            あなたのこたえ: <strong>${input}</strong><br>
+            ただしいこたえ: <strong>${correctAnswer}</strong><br><br>
+            <small>（でた数字: ${currentNumbers.join(' + ')}）</small>
+        `;
+    }
+
+    // 中止ボタンを押したときの処理
+    function cancelGame() {
+        clearAllTimers(); // 実行中のアニメーションやカウントダウンを完全にストップ
+        gameSection.classList.remove('active');
+        resultSection.classList.remove('active');
+        setupSection.classList.add('active');
+    }
+
+    // イベントリスナー
+    startBtn.addEventListener('click', startGame);
+    submitBtn.addEventListener('click', checkAnswer);
+    nextBtn.addEventListener('click', startGame); // そのまま次の問題へ
+    
+    cancelBtn.addEventListener('click', cancelGame); // 中止ボタン
+
+    userAnswer.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+
+    retryBtn.addEventListener('click', () => {
+        resultSection.classList.remove('active');
+        setupSection.classList.add('active');
+    });
+</script>
+
+</body>
+</html>
