@@ -18,6 +18,7 @@
             -webkit-user-select: none;
         }
 
+        /* メニューボタン：フワッと消えるように transition を追加 */
         .back-to-menu {
             position: absolute;
             top: 15px;
@@ -32,10 +33,18 @@
             text-decoration: none;
             box-shadow: 0 4px 0 #f0932b;
             z-index: 10;
+            transition: opacity 0.2s ease, visibility 0.2s;
         }
         .back-to-menu:active {
             transform: translateY(2px);
             box-shadow: 0 2px 0 #f0932b;
+        }
+
+        /* ボタンを隠すためのクラス */
+        .hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
 
         .wrapper {
@@ -57,7 +66,6 @@
             box-shadow: 0 10px 0 #f0932b, 0 15px 30px rgba(0,0,0,0.15);
             width: 100%;
             max-width: 340px;
-            /* 画面内に絶対におさめるためのサイズ制限 */
             height: 92vh;
             max-height: 580px; 
             box-sizing: border-box;
@@ -98,7 +106,6 @@
         .dot.o { background-color: #ff4757; color: white; box-shadow: 0 2px 0 #ff6b81; }
         .dot.x { background-color: #54a0ff; color: white; box-shadow: 0 2px 0 #70a1ff; }
 
-        /* 問題エリア：縦に伸び縮みして調整を吸収する */
         .question-zone {
             background-color: #f7f9fa;
             border: 4px dashed #c5eff7;
@@ -138,7 +145,6 @@
             border-radius: 8px 8px 0 0;
         }
 
-        /* 下部：キーボードエリアのサイズを固定してはみ出し防止 */
         .keyboard {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -155,7 +161,7 @@
             font-size: 26px;
             font-weight: bold;
             color: #2f3640;
-            padding: 10px 0; /* 高さを少しスリムにしてはみ出しを防止 */
+            padding: 10px 0; 
             cursor: pointer;
             transition: 0.05s;
         }
@@ -239,17 +245,15 @@
 </head>
 <body>
 
-<a href="index.html" class="back-to-menu" onclick="playSound('click')">🏠 メニュー</a>
+<a href="index.html" id="back-btn" class="back-to-menu" onclick="playSound('click')">🏠 メニュー</a>
 
 <div class="wrapper">
     <div id="game-container">
-        <!-- 1秒フィードバック -->
         <div id="flash-overlay">
             <div id="flash-mark">💮</div>
             <div id="flash-text">せいかい！</div>
         </div>
 
-        <!-- プレイ画面 -->
         <div id="play-screen" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
             <div class="game-header">
                 <h2>⏱️ たしざん タイムアタック</h2>
@@ -274,7 +278,6 @@
                 </div>
             </div>
 
-            <!-- サイズをスリムに調整したキーボード -->
             <div class="keyboard">
                 <button class="key key-num" onclick="pressKey('1')">1</button>
                 <button class="key key-num" onclick="pressKey('2')">2</button>
@@ -291,7 +294,6 @@
             </div>
         </div>
 
-        <!-- 最終結果画面 -->
         <div id="result-screen">
             <h2>🎉 チャレンジ終了！</h2>
             <div class="time-label">かかった時間</div>
@@ -312,6 +314,7 @@
 
     const totalQuestions = 10;
 
+    const backBtn = document.getElementById('back-btn'); // メニューボタン要素
     const playScreen = document.getElementById('play-screen');
     const resultScreen = document.getElementById('result-screen');
     const questionEl = document.getElementById('question');
@@ -383,8 +386,11 @@
         }
 
         playScreen.style.display = 'flex';
-        resultScreen.classList.remove('active');
+        resultScreen.style.display = 'none';
         flashOverlay.classList.remove('active');
+
+        // 🚨 【ここがポイント】ゲームが始まったらメニューボタンを隠す！
+        backBtn.classList.add('hidden');
 
         startTime = performance.now();
         makeQuestion();
@@ -470,10 +476,13 @@
         const totalTime = ((endTime - startTime) / 1000).toFixed(2);
 
         playScreen.style.display = 'none';
-        resultScreen.classList.add('active');
+        resultScreen.style.display = 'flex';
 
         finalTimeEl.innerText = `${totalTime} 秒`;
         finalScoreEl.innerText = `${totalQuestions}もん中 ${correctCount}もん せいかい！`;
+
+        // 🚨 【ここがポイント】10問すべて終わったらメニューボタンを復活！
+        backBtn.classList.remove('hidden');
     }
 
     initGame();
