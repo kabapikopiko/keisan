@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>みつけよう！光の星座（なぞり快適版）</title>
+    <title>みつけよう！光の星座（パネルなぞり版）</title>
     <style>
         * {
             box-sizing: border-box;
@@ -20,7 +20,6 @@
             min-height: 100vh; overflow: hidden;
         }
 
-        /* 🏠 メニューボタンの配置を安全な左上に */
         .back-to-menu {
             position: absolute; top: 15px; left: 15px; background-color: #ffffff; color: #020617;
             border: 2px solid #38bdf8; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: bold;
@@ -66,43 +65,54 @@
         #game-outer { position: relative; width: 92vw; max-width: 360px; aspect-ratio: 1 / 1; z-index: 10; }
         #line-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 11; }
         #game-board {
-            display: grid; gap: 8px; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4); padding: 15px; border-radius: 24px;
-            border: 1px solid #1e293b; box-shadow: inset 0 4px 30px rgba(0,0,0,0.7);
+            display: grid; gap: 4px; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 8px; border-radius: 16px;
+            border: 2px solid #1e293b; box-shadow: inset 0 4px 30px rgba(0,0,0,0.7);
         }
 
-        /* 星のドット */
+        /* 🆕 ■の四角いパネルスタイル */
         .pad {
-            border-radius: 50%; width: 10px; height: 10px; justify-self: center; align-self: center;
-            background-color: rgba(71, 85, 105, 0.4); position: relative; z-index: 12;
+            background-color: rgba(30, 41, 59, 0.8);
+            border-radius: 6px;
+            width: 100%; height: 100%;
+            position: relative;
+            z-index: 12;
+            transition: background-color 0.15s, box-shadow 0.15s;
         }
 
-        .pad.start { background-color: #38bdf8; box-shadow: 0 0 14px #38bdf8, 0 0 4px #fff; transform: scale(1.4); }
-        .pad.goal { background-color: #f43f5e; box-shadow: 0 0 14px #f43f5e, 0 0 4px #fff; transform: scale(1.4); }
-        .pad.start::after { content: '★'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #38bdf8; font-weight: bold; }
-        .pad.goal::after { content: '★'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #f43f5e; font-weight: bold; }
+        /* 各状態のパネルネオンカラー */
+        .pad.start { background-color: #0284c7; box-shadow: inset 0 0 10px #38bdf8; }
+        .pad.goal { background-color: #e11d48; box-shadow: inset 0 0 10px #fb7185; }
+        
+        .pad.start::after { content: 'START'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; color: #fff; font-weight: bold; letter-spacing: 1px; }
+        .pad.goal::after { content: 'GOAL'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; color: #fff; font-weight: bold; letter-spacing: 1px; }
 
-        .pad.trap { background-color: #fbbf24; box-shadow: 0 0 10px #fbbf24; transform: scale(1.2); }
-        .pad.hint { background-color: #fef08a; box-shadow: 0 0 18px #fef08a, 0 0 6px #fff; transform: scale(1.5); }
-        .pad.active { background-color: #34d399; box-shadow: 0 0 18px #34d399, 0 0 6px #fff; transform: scale(1.5); }
+        /* お邪魔ブラックホール ⚠️ */
+        .pad.trap { background-color: #b45309; box-shadow: inset 0 0 8px #f59e0b; }
+        .pad.trap::after { content: '⚠️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; }
 
-        /* 🆕 画面中央に出る大きなリトライオーバーレイ画面 */
+        /* お手本流星 */
+        .pad.hint { background-color: #eab308; box-shadow: 0 0 12px #fde047; }
+        /* なぞり中のアクティブ星 */
+        .pad.active { background-color: #10b981; box-shadow: 0 0 15px #34d399; }
+
+        /* 画面中央に出る大きなリトライオーバーレイ画面 */
         #retry-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(2, 6, 23, 0.85); border-radius: 24px;
+            background-color: rgba(2, 6, 23, 0.9); border-radius: 16px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
         }
         #retry-overlay.active { opacity: 1; pointer-events: auto; }
-        #retry-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #f43f5e; text-align: center; }
+        #retry-title { font-size: 18px; font-weight: bold; margin-bottom: 25px; color: #f43f5e; text-align: center; line-height: 1.5; padding: 0 20px; }
         
         .action-btn {
-            padding: 14px 40px; font-size: 18px; font-weight: bold;
+            padding: 14px 50px; font-size: 18px; font-weight: bold;
             background-color: #38bdf8; color: #020617; border: none; border-radius: 50px;
-            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4); cursor: pointer; transition: 0.1s;
+            box-shadow: 0 5px 0 #0284c7; cursor: pointer; transition: 0.1s;
             touch-action: manipulation;
         }
-        .action-btn:active { transform: scale(0.95); }
+        .action-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #0284c7; }
     </style>
 </head>
 <body>
@@ -110,24 +120,22 @@
     <a href="index.html" id="back-btn" class="back-to-menu">🏠 メニュー</a>
 
     <div id="header-area">
-        <div id="title">CONSTELLATION LINE</div>
+        <div id="title">NEON PANEL LINE</div>
         <div id="score-board">SCORE: 00000</div>
-        <div id="title-rank">称号: 星を見上げる者</div>
+        <div id="title-rank">称号: パネルの挑戦者</div>
     </div>
 
-    <!-- 難易度選択画面 -->
     <div id="level-screen">
-        <h2>どの星空に挑戦する？</h2>
+        <h2>どのパネルに挑戦する？</h2>
         <button class="btn-level btn-easy" onclick="selectDifficulty('easy')">🟢 しょきゅう (4x4)</button>
         <button class="btn-level btn-medium" onclick="selectDifficulty('medium')">🟡 ちゅうきゅう (6x6)</button>
         <button class="btn-level btn-hard" onclick="selectDifficulty('hard')">🔴 じょうきゅう (8x8)</button>
         <button class="btn-level btn-expert" onclick="selectDifficulty('expert')">🔥 ちょうじょうきゅう (10x10)</button>
     </div>
 
-    <!-- プレイ画面 -->
     <div id="play-screen">
         <div id="status-area">
-            <div id="level">CONSTELLATION 1</div>
+            <div id="level">PANEL 1</div>
             <div id="message">おぼえてね...</div>
         </div>
 
@@ -136,15 +144,14 @@
         </div>
 
         <div id="game-outer">
-            <!-- 🆕 中央にポップアップするやり直し画面 -->
             <div id="retry-overlay">
                 <div id="retry-title">タイムアップ！</div>
                 <button id="start-btn" class="action-btn">もういちど見る</button>
             </div>
 
             <svg id="line-svg">
-                <path id="guide-path" d="" fill="none" stroke="rgba(254, 240, 138, 0.6)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,4"/>
-                <path id="player-path-line" d="" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 0px 5px #34d399);"/>
+                <path id="guide-path" d="" fill="none" stroke="rgba(254, 240, 138, 0.5)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5,5"/>
+                <path id="player-path-line" d="" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 0px 6px #34d399);"/>
             </svg>
             <div id="game-board"></div>
         </div>
@@ -161,8 +168,8 @@
         let timeLimit = 100;     
         let timeInterval = null;
         
-        let gridSize = 8; 
-        let totalPads = 64;
+        let gridSize = 6; 
+        let totalPads = 36;
         let currentDifficulty = 'medium';
 
         const backBtn = document.getElementById('back-btn');
@@ -191,7 +198,6 @@
             totalPads = gridSize * gridSize;
 
             board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            board.style.gap = (gridSize >= 10) ? '5px' : '8px';
 
             levelScreen.style.display = 'none';
             playScreen.style.display = 'flex';
@@ -210,8 +216,8 @@
                 const pad = document.createElement('div');
                 pad.className = 'pad';
                 pad.id = `pad-${i}`;
-                if(gridSize >= 8)  { pad.style.width = '8px'; pad.style.height = '8px'; }
-                if(gridSize >= 10) { pad.style.width = '6px'; pad.style.height = '6px'; }
+                // 超上級は文字サイズを微調整
+                if(gridSize >= 10) { pad.style.borderRadius = '3px'; }
                 board.appendChild(pad);
                 pads.push(pad);
             }
@@ -223,9 +229,7 @@
                 const rect = pad.getBoundingClientRect();
                 return {
                     x: (rect.left + rect.width / 2) - boardRect.left,
-                    y: (rect.top + rect.height / 2) - boardRect.top,
-                    clientX: rect.left + rect.width / 2,
-                    clientY: rect.top + rect.height / 2
+                    y: (rect.top + rect.height / 2) - boardRect.top
                 };
             });
         }
@@ -236,7 +240,7 @@
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
             
-            const baseFreq = 280;
+            const baseFreq = 240;
             const scale = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
             const noteIndex = index % scale.length;
             const octave = Math.floor(index / scale.length);
@@ -263,12 +267,12 @@
         }
 
         function updateRank() {
-            let rank = "み習い星読み";
-            if (level >= 3)  rank = "夜空の案内人";
-            if (level >= 6)  rank = "星座の観測士";
-            if (level >= 9)  rank = "銀河のひらめき";
-            if (level >= 12) rank = "コスモマスター";
-            if (level >= 15) rank = "全天の支配者";
+            let rank = "みならいパネラー";
+            if (level >= 3)  rank = "スピードスター";
+            if (level >= 6)  rank = "パズル達人";
+            if (level >= 9)  rank = "ネオンマスター";
+            if (level >= 12) rank = "天才脳トレキッズ";
+            if (level >= 15) rank = "全知全能の指";
             rankDisplay.innerText = `称号: ${rank}`;
         }
 
@@ -304,9 +308,8 @@
             if (level < 3) return;
             let maxTraps = 2;
             if (currentDifficulty === 'hard') maxTraps = 4;
-            if (currentDifficulty === 'expert') maxTraps = 7;
+            if (currentDifficulty === 'expert') maxTraps = 6;
             
-            // 序盤の罠の数をマイルドに調整
             const trapCount = Math.min(1 + Math.floor((level - 3) / 2), maxTraps);
             while(trapPads.length < trapCount) {
                 let t = Math.floor(Math.random() * totalPads);
@@ -320,9 +323,9 @@
             timeBar.style.width = '100%';
             timeBar.style.backgroundColor = '#38bdf8';
             
-            let baseTime = 11000;
-            if (currentDifficulty === 'hard') baseTime = 15000;
-            if (currentDifficulty === 'expert') baseTime = 20000;
+            let baseTime = 10000;
+            if (currentDifficulty === 'hard') baseTime = 14000;
+            if (currentDifficulty === 'expert') baseTime = 18000;
 
             const duration = Math.max(baseTime - (level * 400), 5000); 
             const intervalStep = 100; 
@@ -332,7 +335,7 @@
                 timeLimit -= decreasePerStep;
                 if (timeLimit <= 0) {
                     timeLimit = 0; timeBar.style.width = '0%';
-                    gameOver("タイムアップ！星が消えちゃった");
+                    gameOver("じかんぎれ！<br>もういちど ルートを おぼえよう");
                 } else {
                     timeBar.style.width = `${timeLimit}%`;
                     if (timeLimit < 30) { timeBar.style.backgroundColor = '#f43f5e'; }
@@ -342,8 +345,8 @@
 
         async function playHint() {
             isGameActive = false;
-            retryOverlay.classList.remove('active'); // やり直し画面を隠す
-            messageDisplay.innerText = "星座の かたちを おぼえてね...";
+            retryOverlay.classList.remove('active'); 
+            messageDisplay.innerText = "ひかる パネルの ルートを おぼえてね...";
             clearInterval(timeInterval);
             timeBar.style.width = '100%';
             if (backBtn) backBtn.classList.add('hidden');
@@ -359,7 +362,7 @@
             pads[currentRoute[currentRoute.length - 1]].classList.add('goal');
 
             let currentHintRoute = [];
-            let speed = (currentRoute.length > 10) ? 150 : 230;
+            let speed = (currentRoute.length > 10) ? 160 : 250;
 
             for (let i = 0; i < currentRoute.length; i++) {
                 await new Promise(r => setTimeout(r, speed));
@@ -374,7 +377,7 @@
             guidePath.setAttribute('d', ''); 
             
             isGameActive = true;
-            messageDisplay.innerText = "START から GOAL まで なぞってね！";
+            messageDisplay.innerText = "START パネル から なぞって はじめよう！";
             if (backBtn) backBtn.classList.remove('hidden');
             startTimer();
         }
@@ -403,57 +406,25 @@
         function gameOver(msg) {
             isGameActive = false; isDrawing = false;
             clearInterval(timeInterval);
-            messageDisplay.innerText = msg;
+            messageDisplay.innerHTML = msg;
             
-            // 🆕 ポップアップ画面を中央に出現させる
-            retryTitle.innerText = msg;
+            retryTitle.innerHTML = msg;
             retryOverlay.classList.add('active');
             
             pads.forEach(p => p.classList.remove('active'));
             drawSvgLine(playerLine, []);
         }
 
-        // 🛠️【完全修正】iPhoneの指先でも快適になぞれる黄金バランスの当たり判定
-        function getClosestPadFromCoords(clientX, clientY) {
-            // マスの細かさに応じて、なぞり判定の範囲を最適化
-            let touchRadius = 32; // 4x4
-            if (gridSize === 6)  touchRadius = 26;
-            if (gridSize === 8)  touchRadius = 22;
-            if (gridSize === 10) touchRadius = 18;
-
-            let closestIndex = null;
-            let minDistance = Infinity;
-
-            for (let i = 0; i < totalPads; i++) {
-                const pos = padPositions[i];
-                if (!pos) continue;
-
-                const dx = clientX - pos.clientX;
-                const dy = clientY - pos.clientY;
-                
-                // 🛠️ バグ修正：正しい2点間の距離の公式（三平方の定理）に修正
-                const distance = Math.sqrt(dx * dx + dy * dy); 
-
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestIndex = i;
-                }
-            }
-
-            // 有効半径以内に入っていればタッチ成功とみなす
-            if (minDistance < touchRadius) {
-                // 罠マス（オレンジ）は判定をかなり小さくして、ギリギリを通り抜けられるようにガード
-                if (trapPads.includes(closestIndex) && minDistance > touchRadius * 0.4) {
-                    return null; 
-                }
-                return closestIndex;
-            }
-            return null;
+        // 🆕【超快適】指が乗っている四角形パネルの要素IDをブラウザ機能で確実にゲット！
+        function getPadIndexFromCoords(clientX, clientY) {
+            const element = document.elementFromPoint(clientX, clientY);
+            if (!element || !element.classList.contains('pad')) return null;
+            return pads.indexOf(element);
         }
 
         function drawStart(index) {
             if (!isGameActive || index === null) return;
-            if (trapPads.includes(index)) { gameOver("⚠️ 暗黒星にふれちゃった！"); return; }
+            if (trapPads.includes(index)) { gameOver("⚠️ トラップパネルを ふんじゃった！"); return; }
             if (index !== currentRoute[0]) return;
             
             isDrawing = true;
@@ -465,12 +436,14 @@
 
         function drawMove(index) {
             if (!isDrawing || index === null) return;
-            if (trapPads.includes(index)) { gameOver("⚠️ 暗黒星にふれちゃった！"); return; }
+            if (trapPads.includes(index)) { gameOver("⚠️ トラップパネルを ふんじゃった！"); return; }
 
             const lastIndex = playerPath[playerPath.length - 1];
             if (index === lastIndex) return;
 
+            // 隣り合うパネルへの移動だけを許可
             if (getAdjacentPads(lastIndex).includes(index)) {
+                // 指を戻したときはやり直し
                 if (playerPath.length > 1 && index === playerPath[playerPath.length - 2]) {
                     pads[lastIndex].classList.remove('active');
                     playerPath.pop();
@@ -478,6 +451,7 @@
                     playConstellationTone(index);
                     return;
                 }
+                // 新しいパネルに進む
                 if (!playerPath.includes(index)) {
                     playerPath.push(index);
                     pads[index].classList.add('active');
@@ -504,28 +478,27 @@
                 const bonus = Math.floor(timeLimit * 10);
                 score += baseScore + bonus;
                 scoreDisplay.innerText = `SCORE: ${String(score).padStart(5, '0')}`;
-                messageDisplay.innerText = `美しい星座が完成！ SCORE +${baseScore + bonus}`;
+                messageDisplay.innerText = `パーフェクト！つぎのステージへ！`;
                 level++;
-                setTimeout(nextLevel, 1500);
+                setTimeout(nextLevel, 1200);
             } else {
-                gameOver("線が ちがうみたい。もういちど覚えよう");
+                gameOver("ルートが ちがうみたい！<br>もういちど おぼえなおそう");
             }
         }
 
-        // 画面外のタッチ感知エリア
         const outerArea = document.getElementById('game-outer');
 
         outerArea.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const t = e.touches[0];
-            const idx = getClosestPadFromCoords(t.clientX, t.clientY);
+            const idx = getPadIndexFromCoords(t.clientX, t.clientY);
             drawStart(idx);
         }, { passive: false });
 
         outerArea.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const t = e.touches[0];
-            const idx = getClosestPadFromCoords(t.clientX, t.clientY);
+            const idx = getPadIndexFromCoords(t.clientX, t.clientY);
             drawMove(idx);
         }, { passive: false });
 
@@ -535,13 +508,13 @@
 
         outerArea.addEventListener('mousedown', (e) => {
             e.preventDefault();
-            const idx = getClosestPadFromCoords(e.clientX, e.clientY);
+            const idx = getPadIndexFromCoords(e.clientX, e.clientY);
             drawStart(idx);
         });
 
         window.addEventListener('mousemove', (e) => {
             if (!isDrawing) return;
-            const idx = getClosestPadFromCoords(e.clientX, e.clientY);
+            const idx = getPadIndexFromCoords(e.clientX, e.clientY);
             drawMove(idx);
         });
 
