@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>計算ガンマン - 悪者をたおせ！</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=MPLUSRounded1c:wght@800;900&display=swap');
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            position: fixed;
+            background: #1e0c03;
+            font-family: 'MPLUSRounded1c', 'Fredoka One', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .wrapper {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            text-align: center;
+            background: linear-gradient(180deg, #ff9f43 0%, #ee5253 45%, #5f27cd 100%);
+            padding: 15px;
+            border-radius: 35px; 
+            border: 8px solid #feca57; 
+            box-shadow: 0 12px 0 #ff9f43, 0 20px 40px rgba(0,0,0,0.6);
+            width: 100%;
+            max-width: 370px;
+            height: 95vh;
+            max-height: 640px; 
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            cursor: crosshair;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        /* ラスボス時の背景色変更 */
+        #game-container.boss-mode {
+            background: linear-gradient(180deg, #880015 0%, #3a0007 50%, #000000 100%);
+            border-color: #ff3838;
+            box-shadow: 0 12px 0 #880015, 0 0 20px rgba(255,0,0,0.5);
+        }
+
+        /* ヘッダー */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.45);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 900;
+            color: #fff;
+            font-size: 15px;
+            border: 3px solid #feca57;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+        }
+
+        /* 敵・計算問題エリア */
+        .enemy-zone {
+            background: linear-gradient(135deg, #fff200 0%, #fffa65 100%);
+            border: 5px solid #ff3838;
+            border-radius: 25px;
+            padding: 6px;
+            margin: 6px 0;
+            color: #2d3436;
+            box-shadow: 0 8px 0 #c56cf0, inset 0 0 10px rgba(255,255,255,0.8);
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .enemy-zone.boss-zone {
+            background: linear-gradient(135deg, #ff4d4d 0%, #990000 100%);
+            border-color: #ffff00;
+            color: #fff;
+            box-shadow: 0 0 15px #ff0000;
+        }
+
+        .enemy-title {
+            font-size: 12px;
+            font-weight: 900;
+            color: #ff3838;
+            letter-spacing: 2px;
+            background: #ffffff;
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 2px solid #ff3838;
+        }
+
+        .enemy-zone.boss-zone .enemy-title {
+            background: #000;
+            color: #ff0000;
+            border-color: #ff0000;
+        }
+
+        .question-text {
+            font-size: 38px;
+            font-weight: 900;
+            margin: 2px 0;
+            color: #2d3436;
+            text-shadow: 2px 2px 0px #fff;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .enemy-zone.boss-zone .question-text {
+            color: #fff;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        /* ターゲットエリア */
+        #targets-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 250px;
+            margin: 5px 0;
+            perspective: 1000px;
+        }
+
+        /* 悪者カード */
+        .target-card {
+            width: 102px;
+            height: 165px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .target-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            padding: 8px 4px;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.3);
+            border: 4px solid #fff;
+        }
+
+        .target-front {
+            background: linear-gradient(180deg, #f8efba 0%, #eccc68 100%);
+            border-color: #574b90;
+        }
+
+        /* ラスボス時のカード色変更（枠からはみ出ないシンプルな色変化） */
+        .target-front.boss-card {
+            background: linear-gradient(180deg, #485460 0%, #1e272e 100%);
+            border-color: #ff3838;
+        }
+
+        .wanted-header {
+            font-size: 10px;
+            font-weight: 900;
+            color: #b33939;
+            background: #f7d794;
+            padding: 1px 6px;
+            border-radius: 8px;
+            border: 1px solid #b33939;
+            letter-spacing: 1px;
+        }
+
+        .boss-card .wanted-header {
+            background: #ff0000;
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+
+        .monster-avatar {
+            font-size: 42px;
+            line-height: 1;
+            filter: drop-shadow(0 4px 0 rgba(0,0,0,0.15));
+        }
+
+        .answer-badge {
+            background: #ff3838;
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 900;
+            width: 90%;
+            border-radius: 12px;
+            border: 3px solid #fff;
+            text-shadow: 2px 2px 0 #7d5fff;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .boss-card .answer-badge {
+            background: #ffaa00;
+            color: #000;
+            text-shadow: none;
+            border-color: #ff0000;
+        }
+
+        /* 裏（K.O. / 撃破） */
+        .target-back {
+            background: linear-gradient(180deg, #2d3436 0%, #000000 100%);
+            color: #feca57;
+            transform: rotateY(180deg);
+            border-color: #feca57;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .ko-stamp {
+            font-size: 28px;
+            font-weight: 900;
+            color: #ff3838;
+            border: 4px solid #ff3838;
+            padding: 2px 8px;
+            border-radius: 10px;
+            transform: rotate(-12deg);
+            text-shadow: 0 0 8px rgba(255,56,56,0.6);
+            background: rgba(0,0,0,0.8);
+        }
+
+        .target-card.flipped {
+            transform: rotateY(180deg) scale(0.95);
+        }
+
+        .target-card.wrong-hit {
+            animation: shake 0.35s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotateY(180deg) translateX(0); }
+            20% { transform: rotateY(180deg) translateX(-12px) rotate(-5deg); }
+            60% { transform: rotateY(180deg) translateX(12px) rotate(5deg); }
+        }
+
+        /* 各種スクリーン */
+        .screen-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 12, 3, 0.96);
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            padding: 15px;
+            box-sizing: border-box;
+            color: #fff;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 90%;
+            margin-top: 10px;
+        }
+
+        .btn-select {
+            background: linear-gradient(180deg, #fffa65 0%, #ffaf40 100%);
+            color: #2d3436;
+            border: 3px solid #fff;
+            padding: 12px 0;
+            font-size: 18px;
+            font-weight: 900;
+            border-radius: 20px;
+            box-shadow: 0 6px 0 #ff3838;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .btn-select:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #ff3838;
+        }
+
+        .btn-mode-add { background: linear-gradient(180deg, #ff7675 0%, #d63031 100%); color: #fff; }
+        .btn-mode-sub { background: linear-gradient(180deg, #74b9ff 0%, #0984e3 100%); color: #fff; }
+        .btn-mode-mul { background: linear-gradient(180deg, #ffeaa7 0%, #fdcb6e 100%); color: #2d3436; }
+        .btn-mode-div { background: linear-gradient(180deg, #a29bfe 0%, #6c5ce7 100%); color: #fff; }
+
+        .btn-lvl-easy { background: #55efc4; color: #2d3436; }
+        .btn-lvl-medium { background: #ffeaa7; color: #2d3436; }
+        .btn-lvl-hard { background: #ff7675; color: #fff; }
+        .btn-lvl-ultra { background: #a29bfe; color: #fff; }
+
+        .btn-main {
+            background: linear-gradient(180deg, #fffa65 0%, #ffaf40 100%);
+            color: #2d3436;
+            border: 4px solid #fff;
+            padding: 12px 32px;
+            font-size: 22px;
+            font-weight: 900;
+            border-radius: 50px;
+            box-shadow: 0 8px 0 #ff3838;
+            cursor: pointer;
+            touch-action: manipulation;
+            margin-top: 15px;
+        }
+
+        .pop-text {
+            position: absolute;
+            font-size: 38px;
+            font-weight: 900;
+            color: #fffa65;
+            text-shadow: 4px 4px 0 #ff3838, -2px -2px 0 #000;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
+        }
+
+        .pop-text.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.2) rotate(5deg);
+        }
+
+        .bullet-hole {
+            position: absolute;
+            width: 20px; height: 20px;
+            background: radial-gradient(circle, #2d3436 40%, #000000 100%);
+            border: 3px solid #fffa65;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #ff3838;
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div id="game-container">
+
+        <div id="pop-text" class="pop-text">BANG!!</div>
+
+        <!-- 1. モード選択画面 -->
+        <div id="mode-screen" class="screen-overlay">
+            <h1 style="color: #fffa65; font-size: 28px; text-shadow: 3px 3px 0 #ff3838; margin-bottom: 5px;">🤠 計算ガンマン</h1>
+            <p style="color: #ffaf40; font-size: 16px; font-weight: 900; margin-bottom: 15px;">どの けいさん で勝負する？</p>
+            <div class="btn-grid">
+                <button class="btn-select btn-mode-add" onclick="selectMode('add')">➕ たしざん</button>
+                <button class="btn-select btn-mode-sub" onclick="selectMode('sub')">➖ ひきざん</button>
+                <button class="btn-select btn-mode-mul" onclick="selectMode('mul')">✖️ かけざん</button>
+                <button class="btn-select btn-mode-div" onclick="selectMode('div')">➗ わりざん</button>
+            </div>
+        </div>
+
+        <!-- 2. 難易度選択画面 -->
+        <div id="level-screen" class="screen-overlay" style="display: none;">
+            <h2 style="color: #fffa65; font-size: 26px; text-shadow: 3px 3px 0 #ff3838; margin-bottom: 5px;">難易度をえらぼう</h2>
+            <p style="color: #ffaf40; font-size: 15px; font-weight: 900; margin-bottom: 15px;" id="mode-subtitle">たしざん</p>
+            <div class="btn-grid">
+                <button class="btn-select btn-lvl-easy" onclick="selectLevel('easy')">🟢 しょきゅう</button>
+                <button class="btn-select btn-lvl-medium" onclick="selectLevel('medium')">🟡 ちゅうきゅう</button>
+                <button class="btn-select btn-lvl-hard" onclick="selectLevel('hard')">🔴 じょうきゅう</button>
+                <button class="btn-select btn-lvl-ultra" onclick="selectLevel('ultra')">💜 ちょうじょうきゅう</button>
+            </div>
+            <button class="btn-main" style="padding: 8px 20px; font-size: 16px;" onclick="showModeSelect()">もどる</button>
+        </div>
+
+        <!-- ヘッダー -->
+        <div class="game-header">
+            <div>⏱️ <span id="timer-display">0.00</span> 秒</div>
+            <div>🎯 残り <span id="remaining-display">10</span> 匹</div>
+        </div>
+
+        <!-- 計算問題表示 -->
+        <div class="enemy-zone" id="enemy-zone">
+            <div class="enemy-title" id="enemy-title">WANTED MONSTER</div>
+            <div class="question-text" id="question-display">5 ＋ 6 ＝ ?</div>
+        </div>
+
+        <!-- ターゲット悪者カード -->
+        <div id="targets-container">
+            <!-- JSで動的生成 -->
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="result-screen" class="screen-overlay" style="display: none;">
+            <h2 style="color: #fffa65; font-size: 28px; text-shadow: 3px 3px 0 #ff3838; margin-bottom: 5px;">🎉 ミッション完了！</h2>
+            <p style="font-size: 15px; color: #ccc; margin-bottom: 5px;">たおした時間</p>
+            <div style="font-size: 44px; font-weight: 900; color: #ff3838; text-shadow: 2px 2px 0 #fff; margin-bottom: 10px;" id="final-time">0.00 秒</div>
+            <p style="font-size: 17px; color: #fffa65; font-weight: 900; margin-bottom: 20px;" id="rank-evaluation">評価: 神速のガンマン！</p>
+            <button class="btn-main" onclick="showModeSelect()">モード選択にもどる</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const TOTAL_QUESTIONS = 10;
+    let currentQuestionIndex = 0;
+    let num1 = 0, num2 = 0, correctAnswer = 0;
+    let startTime = 0;
+    let timerInterval = null;
+    let isLock = false;
+    let currentMode = 'add';
+    let currentLevel = 'easy';
+
+    // 悪者モンスター（絵文字1文字に揃えて枠くずれを防止）
+    const monsterIcons = ['👿', '😈', '👹', '👺', '👾', '👽', '💀', '🤖', '🎃', '🧌', '🐍', '🦇', '🐺', '🧟', '🧛'];
+    const bossIcons = ['☠️️', '👿', '👹', '👁️', '🐉', '🐲', '🤡'];
+
+    const modeScreen = document.getElementById('mode-screen');
+    const levelScreen = document.getElementById('level-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const gameContainer = document.getElementById('game-container');
+    const enemyZone = document.getElementById('enemy-zone');
+    const enemyTitle = document.getElementById('enemy-title');
+    const questionDisplay = document.getElementById('question-display');
+    const targetsContainer = document.getElementById('targets-container');
+    const timerDisplay = document.getElementById('timer-display');
+    const remainingDisplay = document.getElementById('remaining-display');
+    const finalTimeDisplay = document.getElementById('final-time');
+    const rankEvaluation = document.getElementById('rank-evaluation');
+    const popText = document.getElementById('pop-text');
+    const modeSubtitle = document.getElementById('mode-subtitle');
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'gunshot') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(900, now);
+            osc.frequency.exponentialRampToValueAtTime(30, now + 0.12);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+            osc.start(now); osc.stop(now + 0.12);
+        } else if (type === 'hit') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.08);
+            osc.frequency.setValueAtTime(783.99, now + 0.16);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'boss_hit') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.setValueAtTime(400, now + 0.1);
+            osc.frequency.setValueAtTime(800, now + 0.2);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(160, now);
+            osc.frequency.setValueAtTime(110, now + 0.12);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now); osc.stop(now + 0.25);
+        }
+    }
+
+    function showModeSelect() {
+        modeScreen.style.display = 'flex';
+        levelScreen.style.display = 'none';
+        resultScreen.style.display = 'none';
+    }
+
+    function selectMode(mode) {
+        currentMode = mode;
+        const names = { add: 'たしざん', sub: 'ひきざん', mul: 'かけざん', div: 'わりざん' };
+        modeSubtitle.innerText = names[mode];
+        modeScreen.style.display = 'none';
+        levelScreen.style.display = 'flex';
+    }
+
+    function selectLevel(level) {
+        currentLevel = level;
+        levelScreen.style.display = 'none';
+        startGame();
+    }
+
+    function startGame() {
+        currentQuestionIndex = 0;
+        isLock = false;
+
+        gameContainer.classList.remove('boss-mode');
+        enemyZone.classList.remove('boss-zone');
+
+        startTimer();
+        makeQuestion();
+    }
+
+    function startTimer() {
+        startTime = performance.now();
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+            timerDisplay.innerText = elapsed;
+        }, 30);
+    }
+
+    function makeQuestion() {
+        const isBoss = (currentQuestionIndex === TOTAL_QUESTIONS - 1);
+        remainingDisplay.innerText = TOTAL_QUESTIONS - currentQuestionIndex;
+        isLock = false;
+
+        if (isBoss) {
+            gameContainer.classList.add('boss-mode');
+            enemyZone.classList.add('boss-zone');
+            enemyTitle.innerText = '⚠️ FINAL BOSS ⚠️';
+            showPopText('WARNING!', window.innerWidth / 2, window.innerHeight / 2);
+        } else {
+            gameContainer.classList.remove('boss-mode');
+            enemyZone.classList.remove('boss-zone');
+            enemyTitle.innerText = 'WANTED MONSTER';
+        }
+
+        generateMathProblem();
+
+        // ダミー選択肢
+        let dummy1 = correctAnswer + (Math.random() < 0.5 ? 1 : -1);
+        if (dummy1 < 0) dummy1 = correctAnswer + 2;
+
+        let dummy2 = correctAnswer + (Math.random() < 0.5 ? 2 : -2);
+        if (dummy2 === dummy1 || dummy2 < 0) dummy2 = correctAnswer + 3;
+
+        let choices = [
+            { val: correctAnswer, isCorrect: true },
+            { val: dummy1, isCorrect: false },
+            { val: dummy2, isCorrect: false }
+        ];
+
+        choices.sort(() => Math.random() - 0.5);
+
+        const iconList = isBoss ? bossIcons : monsterIcons;
+        const shuffledIcons = [...iconList].sort(() => Math.random() - 0.5);
+
+        targetsContainer.innerHTML = '';
+        choices.forEach((choice, index) => {
+            const card = document.createElement('div');
+            card.className = 'target-card';
+            const bossClass = isBoss ? 'boss-card' : '';
+            const wantedText = isBoss ? 'FINAL BOSS' : 'WANTED';
+
+            card.innerHTML = `
+                <div class="target-face target-front ${bossClass}">
+                    <div class="wanted-header">${wantedText}</div>
+                    <div class="monster-avatar">${shuffledIcons[index]}</div>
+                    <div class="answer-badge">${choice.val}</div>
+                </div>
+                <div class="target-face target-back">
+                    <div class="ko-stamp">K.O.</div>
+                    <div style="font-size: 32px;">💥</div>
+                </div>
+            `;
+            card.addEventListener('pointerdown', (e) => shootTarget(e, card, choice.isCorrect, isBoss));
+            targetsContainer.appendChild(card);
+        });
+    }
+
+    // 🎯 難易度とモードに応じた数値計算ルール
+    function generateMathProblem() {
+        if (currentMode === 'add') {
+            // たしざん
+            if (currentLevel === 'easy') {
+                // 初級: 答えが5以下
+                correctAnswer = Math.floor(Math.random() * 4) + 2; // 2〜5
+                num1 = Math.floor(Math.random() * (correctAnswer - 1)) + 1;
+                num2 = correctAnswer - num1;
+            } else if (currentLevel === 'medium') {
+                // 中級: 答えが10以下
+                correctAnswer = Math.floor(Math.random() * 5) + 6; // 6〜10
+                num1 = Math.floor(Math.random() * (correctAnswer - 1)) + 1;
+                num2 = correctAnswer - num1;
+            } else if (currentLevel === 'hard') {
+                // 上級: 答えが15以下
+                correctAnswer = Math.floor(Math.random() * 5) + 11; // 11〜15
+                num1 = Math.floor(Math.random() * (correctAnswer - 1)) + 1;
+                num2 = correctAnswer - num1;
+            } else {
+                // 超上級: 20〜99の暗算
+                num1 = Math.floor(Math.random() * 40) + 10;
+                num2 = Math.floor(Math.random() * 40) + 10;
+                correctAnswer = num1 + num2;
+            }
+            questionDisplay.innerText = `${num1} ＋ ${num2} ＝ ?`;
+
+        } else if (currentMode === 'sub') {
+            // ひきざん
+            if (currentLevel === 'easy') {
+                num1 = Math.floor(Math.random() * 4) + 2; // 2〜5
+                num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
+            } else if (currentLevel === 'medium') {
+                num1 = Math.floor(Math.random() * 5) + 6; // 6〜10
+                num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
+            } else if (currentLevel === 'hard') {
+                num1 = Math.floor(Math.random() * 5) + 11; // 11〜15
+                num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
+            } else {
+                num1 = Math.floor(Math.random() * 50) + 20;
+                num2 = Math.floor(Math.random() * 19) + 1;
+            }
+            correctAnswer = num1 - num2;
+            questionDisplay.innerText = `${num1} － ${num2} ＝ ?`;
+
+        } else if (currentMode === 'mul') {
+            // かけざん
+            if (currentLevel === 'easy') {
+                num1 = Math.floor(Math.random() * 3) + 1; // 1〜3の段
+                num2 = Math.floor(Math.random() * 9) + 1;
+            } else if (currentLevel === 'medium') {
+                num1 = Math.floor(Math.random() * 5) + 1; // 1〜5の段
+                num2 = Math.floor(Math.random() * 9) + 1;
+            } else if (currentLevel === 'hard') {
+                num1 = Math.floor(Math.random() * 9) + 1; // 1〜9の段 (九九全体)
+                num2 = Math.floor(Math.random() * 9) + 1;
+            } else {
+                num1 = Math.floor(Math.random() * 8) + 2;   // 1桁 (2〜9)
+                num2 = Math.floor(Math.random() * 10) + 11; // 2桁 (11〜20)
+            }
+            correctAnswer = num1 * num2;
+            questionDisplay.innerText = `${num1} × ${num2} ＝ ?`;
+
+        } else if (currentMode === 'div') {
+            // わりざん (余りなし逆算)
+            if (currentLevel === 'easy') {
+                num2 = Math.floor(Math.random() * 3) + 1; // 1〜3で割る
+                correctAnswer = Math.floor(Math.random() * 5) + 1;
+            } else if (currentLevel === 'medium') {
+                num2 = Math.floor(Math.random() * 5) + 1; // 1〜5で割る
+                correctAnswer = Math.floor(Math.random() * 9) + 1;
+            } else if (currentLevel === 'hard') {
+                num2 = Math.floor(Math.random() * 9) + 1; // 1〜9で割る
+                correctAnswer = Math.floor(Math.random() * 9) + 1;
+            } else {
+                num2 = Math.floor(Math.random() * 8) + 2;
+                correctAnswer = Math.floor(Math.random() * 10) + 11;
+            }
+            num1 = num2 * correctAnswer;
+            questionDisplay.innerText = `${num1} ÷ ${num2} ＝ ?`;
+        }
+    }
+
+    function shootTarget(e, cardEl, isCorrect, isBoss) {
+        if (isLock) return;
+
+        playSound('gunshot');
+        createBulletHole(e.clientX, e.clientY);
+
+        if (isCorrect) {
+            isLock = true;
+            playSound(isBoss ? 'boss_hit' : 'hit');
+            cardEl.classList.add('flipped');
+
+            showPopText(isBoss ? 'BOSS K.O.!!' : 'BANG!!', e.clientX, e.clientY);
+            createParticles(e.clientX, e.clientY, isBoss ? 35 : 20);
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < TOTAL_QUESTIONS) {
+                    makeQuestion();
+                } else {
+                    endGame();
+                }
+            }, isBoss ? 500 : 380);
+
+        } else {
+            isLock = true;
+            playSound('wrong');
+            cardEl.classList.add('flipped', 'wrong-hit');
+
+            showPopText('MISS!', e.clientX, e.clientY);
+
+            setTimeout(() => {
+                cardEl.classList.remove('flipped', 'wrong-hit');
+                isLock = false;
+            }, 500);
+        }
+    }
+
+    function createBulletHole(x, y) {
+        const hole = document.createElement('div');
+        hole.className = 'bullet-hole';
+        hole.style.left = `${x}px`;
+        hole.style.top = `${y}px`;
+        document.body.appendChild(hole);
+        setTimeout(() => hole.remove(), 700);
+    }
+
+    function showPopText(msg, x, y) {
+        popText.innerText = msg;
+        popText.style.left = `${x}px`;
+        popText.style.top = `${y - 20}px`;
+        popText.classList.add('active');
+        setTimeout(() => popText.classList.remove('active'), 300);
+    }
+
+    function createParticles(x, y, count = 20) {
+        const colors = ['#fffa65', '#ffaf40', '#ff3838', '#ffffff', '#c56cf0'];
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size = Math.random() * 10 + 6;
+            p.style.width = `${size}px`; p.style.height = `${size}px`;
+            p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            p.style.left = `${x}px`; p.style.top = `${y}px`;
+            document.body.appendChild(p);
+
+            const angle = Math.random() * Math.PI * 2;
+            const v = Math.random() * 160 + 60;
+            const dx = Math.cos(angle) * v;
+            const dy = Math.sin(angle) * v;
+
+            const anim = p.animate([
+                { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+                { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0)`, opacity: 0 }
+            ], { duration: 550, easing: 'ease-out', fill: 'forwards' });
+            anim.onfinish = () => p.remove();
+        }
+    }
+
+    function endGame() {
+        clearInterval(timerInterval);
+        const finalTime = ((performance.now() - startTime) / 1000).toFixed(2);
+        finalTimeDisplay.innerText = `${finalTime} 秒`;
+
+        let evalText = "🤠 評価: パトロール完了！";
+        if (finalTime < 12) evalText = "🏆 評価: 伝説の神速ガンマン！";
+        else if (finalTime < 20) evalText = "⭐ 評価: さすらいの用心棒！";
+        else evalText = "🌵 評価: 見習いガンマン！";
+
+        rankEvaluation.innerText = evalText;
+        resultScreen.style.display = 'flex';
+    }
+</script>
+
+</body>
+</html>
