@@ -4,42 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>さんすう 文章題タイムアタック</title>
+    <!-- 共通スタイルシート -->
+    <link rel="stylesheet" href="css/game-common.css">
     <style>
-        html, body {
-            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; position: fixed;
-            background: linear-gradient(135deg, #eef2f3 0%, #8e9eab 100%); 
-            font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', sans-serif;
-            user-select: none; -webkit-user-select: none;
+        body {
+            background: linear-gradient(135deg, #eef2f3 0%, #8e9eab 100%);
         }
-
-        .back-to-menu {
-            position: absolute; top: 15px; left: 15px; background-color: #ffffff; color: #34495e;
-            border: 3px solid #7f8c8d; padding: 6px 14px; border-radius: 30px; font-size: 14px; font-weight: bold;
-            text-decoration: none; box-shadow: 0 4px 0 #34495e; z-index: 10;
-            transition: opacity 0.2s ease, visibility 0.2s; touch-action: manipulation;
-        }
-        .back-to-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #34495e; }
-        .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
-        .wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
 
         #game-container {
-            text-align: center; background: #ffffff; padding: 15px; border-radius: 35px; 
-            border: 6px solid #95a5a6; box-shadow: 0 10px 0 #7f8c8d, 0 15px 30px rgba(0,0,0,0.15);
-            width: 100%; max-width: 350px; height: 94vh; max-height: 600px; box-sizing: border-box;
-            position: relative; display: flex; flex-direction: column; justify-content: space-between;
+            border: 6px solid #95a5a6;
+            box-shadow: 0 10px 0 #7f8c8d, 0 15px 30px rgba(0,0,0,0.15);
+            width: 100%; max-width: 350px; height: 94vh; max-height: 600px;
         }
 
         .game-header h2 { margin: 0 0 5px 0; color: #2c3e50; font-size: 18px; text-shadow: 1px 1px 0 white; }
-
-        #history-board { display: flex; justify-content: center; gap: 4px; margin-bottom: 5px; }
-        .dot {
-            width: 24px; height: 24px; border-radius: 50%; background-color: #f1f2f6;
-            display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #a4b0be;
-        }
-        .dot.current { border: 2px solid #34495e; background-color: #fff; color: #34495e; transform: scale(1.05); }
-        .dot.o { background-color: #2ecc71; color: white; box-shadow: 0 2px 0 #27ae60; }
-        .dot.x { background-color: #e74c3c; color: white; box-shadow: 0 2px 0 #c0392b; }
 
         /* 文字があふれないようにスクロールと絶妙な高さを確保 */
         .question-zone {
@@ -66,38 +44,6 @@
             font-size: 32px; font-weight: bold; width: 100px; height: 48px; line-height: 44px;
             border-bottom: 4px solid #2c3e50; color: #2c3e50; text-align: center; background-color: #f8fafc; border-radius: 8px 8px 0 0;
         }
-
-        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; }
-        .key {
-            background-color: #f5f6fa; border: none; border-bottom: 4px solid #dcdde1; border-radius: 12px;
-            font-size: 22px; font-weight: bold; color: #2f3640; padding: 8px 0; cursor: pointer; transition: 0.05s;
-            touch-action: manipulation;
-        }
-        .key:active { transform: translateY(2px); border-bottom-width: 2px; }
-        .key-num { background-color: #fff; border-bottom-color: #ced6e0; }
-        .key-clear { background-color: #ffae34; border-bottom-color: #cc8412; color: white; font-size: 16px; }
-        .key-enter { grid-column: span 2; background-color: #2ed573; border-bottom-color: #26af5f; color: white; font-size: 18px; }
-
-        #flash-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(255,255,255,0.96); border-radius: 29px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.1s ease;
-        }
-        #flash-overlay.active { opacity: 1; }
-        #flash-mark { font-size: 80px; }
-        #flash-text { font-size: 18px; font-weight: bold; margin-top: 10px; text-align: center; padding: 0 15px; line-height: 1.5; }
-
-        #result-screen { display: none; height: 100%; flex-direction: column; justify-content: center; align-items: center; }
-        .time-label { font-size: 16px; color: #7f8c8d; margin-bottom: 5px; }
-        .time-text { font-size: 38px; color: #2c3e50; font-weight: bold; margin-bottom: 15px; text-shadow: 1px 1px 0 white; }
-        .btn-restart {
-            background-color: #2ed573; color: white; border: none; padding: 12px 24px; font-size: 18px; font-weight: bold;
-            border-radius: 50px; border-bottom: 5px solid #26af5f; cursor: pointer; width: 100%;
-            box-shadow: 0 5px 10px rgba(46, 213, 115, 0.3); touch-action: manipulation;
-        }
-
-        .particle { position: absolute; pointer-events: none; border-radius: 50%; z-index: 999; }
     </style>
 </head>
 <body>
@@ -122,6 +68,8 @@
             
             <div class="question-zone">
                 <div id="question-text">読み込み中...</div>
+                <button id="hint-btn" onclick="toggleHint()" style="margin-top: 8px; background: #f59e0b; color: #fff; border: none; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">💡 ヒントをみる</button>
+                <div id="hint-box" style="display: none; background: rgba(0,0,0,0.4); color: #fde047; padding: 6px 10px; border-radius: 8px; font-size: 13px; margin-top: 6px; text-align: center; width: 100%;"></div>
             </div>
 
             <div id="answer-row">
@@ -141,13 +89,17 @@
 
         <div id="result-screen">
             <h2>🎉 チャレンジ終了！</h2>
+            <div id="star-rating" class="star-rating">⭐⭐⭐</div>
             <div class="time-label">かかった時間</div>
             <div class="time-text" id="final-time">00秒00</div>
-            <p id="final-score" style="font-size: 18px; font-weight: bold; color: #57606f; margin-bottom: 20px;"></p>
+            <p id="final-score" style="font-size: 16px; font-weight: bold; color: #57606f; margin-bottom: 15px;"></p>
+            <p id="best-record-msg" style="font-size: 14px; font-weight: bold; color: #10b981; margin-bottom: 15px;"></p>
             <button class="btn-restart" onclick="initGame()">もういちどチャレンジ</button>
         </div>
     </div>
 </div>
+
+<script src="js/game-common.js"></script>
 
 <script>
     // 🆕 ランダム生成用のパーツを大幅に強化！
@@ -285,8 +237,39 @@
         }
     }
 
+    let comboCount = 0;
+    const starRatingEl = document.getElementById('star-rating');
+    const bestRecordMsgEl = document.getElementById('best-record-msg');
+    const hintBoxEl = document.getElementById('hint-box');
+
+    // ⌨️ 物理キーボード対応
+    KeyboardHelper.bindNumPad(
+        (numKey) => pressKey(numKey),
+        () => pressKey('enter'),
+        () => pressKey('clear')
+    );
+
+    function playSound(type) {
+        if (type === 'click') sounds.playClick();
+        else if (type === 'correct') sounds.playCorrect(comboCount);
+        else if (type === 'incorrect') sounds.playIncorrect();
+    }
+
+    function createParticles() {
+        FXHelper.createConfetti(25);
+    }
+
+    function toggleHint() {
+        if (hintBoxEl.style.display === 'none') {
+            hintBoxEl.style.display = 'block';
+            sounds.playClick();
+        } else {
+            hintBoxEl.style.display = 'none';
+        }
+    }
+
     function initGame() {
-        currentQuestionIndex = 0; correctCount = 0; currentInput = ""; lockInput = false;
+        currentQuestionIndex = 0; correctCount = 0; comboCount = 0; currentInput = ""; lockInput = false;
         for (let i = 0; i < totalQuestions; i++) {
             const dot = document.getElementById(`dot-${i}`); dot.className = "dot"; dot.innerText = i + 1;
         }
@@ -300,6 +283,7 @@
 
     function makeQuestion() {
         currentInput = ""; answerDisplayEl.innerText = "";
+        hintBoxEl.style.display = 'none';
         document.getElementById(`dot-${currentQuestionIndex}`).classList.add('current');
 
         const randomName = names[Math.floor(Math.random() * names.length)];
@@ -313,6 +297,7 @@
             val2 = Math.floor(Math.random() * 9) + 1; 
             correctAnswer = val1 + val2;
             currentExplanation = `しき：${val1} ＋ ${val2} ＝ ${correctAnswer}`;
+            hintBoxEl.innerText = "💡 「あわせる」「ぜんぶで」「ふえる」は 【たしざん (＋)】 だよ！";
         } else {
             val1 = Math.floor(Math.random() * 10) + 5; 
             val2 = Math.floor(Math.random() * 4) + 1;  
@@ -323,6 +308,7 @@
             if (val1 < val2) { [val1, val2] = [val2, val1]; }
             correctAnswer = val1 - val2;
             currentExplanation = `しき：${val1} － ${val2} ＝ ${correctAnswer}`;
+            hintBoxEl.innerText = "💡 「のこり」「どちらが多い」「ちがい」は 【ひきざん (－)】 だよ！";
         }
 
         questionTextEl.innerHTML = template.text(randomName, randomItem, val1, val2);
@@ -331,7 +317,7 @@
 
     function pressKey(key) {
         if (lockInput) return;
-        playSound('click');
+        sounds.playClick();
         if (key === 'clear') { currentInput = ""; } 
         else if (key === 'enter') { checkAnswer(); return; } 
         else { if (currentInput.length < 2) currentInput += key; }
@@ -346,13 +332,20 @@
 
         let isCorrect = (userAnswer === correctAnswer);
         if (isCorrect) {
-            playSound('correct'); createParticles();
+            comboCount++;
+            sounds.playCorrect(comboCount); createParticles();
             currentDot.className = "dot o"; currentDot.innerText = "◯";
+            
+            if (comboCount >= 3) {
+                FXHelper.showComboText(`🔥 ${comboCount}れんぞく！`);
+            }
+
             flashMark.innerText = "💮"; flashText.innerText = `せいかい！ すごい！\n\n${currentExplanation}`;
             flashText.style.color = "#2ecc71";
             correctCount++;
         } else {
-            playSound('incorrect');
+            comboCount = 0;
+            sounds.playIncorrect();
             currentDot.className = "dot x"; currentDot.innerText = "×";
             flashMark.innerText = "❌"; flashText.innerText = `おしい！\nこたえは 【${correctAnswer}】 だよ\n\n${currentExplanation}`;
             flashText.style.color = "#e74c3c";
@@ -364,14 +357,35 @@
             flashOverlay.className = "";
             currentQuestionIndex++;
             if (currentQuestionIndex < totalQuestions) makeQuestion(); else endGame();
-        }, 3000); 
+        }, 2200); 
     }
 
     function endGame() {
-        const endTime = performance.now(); const totalTime = ((endTime - startTime) / 1000).toFixed(2);
+        const endTime = performance.now();
+        const totalTimeNum = parseFloat(((endTime - startTime) / 1000).toFixed(2));
+        const totalTimeStr = `${totalTimeNum.toFixed(2)} 秒`;
+
         playScreen.style.display = 'none'; resultScreen.style.display = 'flex';
-        finalTimeEl.innerText = `${totalTime} 秒`; finalScoreEl.innerText = `${totalQuestions}もん中 ${correctCount}もん せいかい！`;
         
+        let stars = 1;
+        if (correctCount >= 8 && totalTimeNum < 45) stars = 3;
+        else if (correctCount >= 6) stars = 2;
+
+        starRatingEl.innerText = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+        finalTimeEl.innerText = totalTimeStr;
+        finalScoreEl.innerText = `${totalQuestions}問中 ${correctCount}問 正解！`;
+
+        const calculatedScore = (correctCount * 100) + Math.max(0, Math.floor((90 - totalTimeNum) * 10));
+        const res = ScoreStore.saveGameData('bunshou', { score: calculatedScore, time: totalTimeNum, stars });
+
+        if (res.isNewBestTime || res.isNewHigh) {
+            bestRecordMsgEl.innerHTML = `🏆 自己ベスト更新！ <span class="badge-new">NEW</span>`;
+            sounds.playFanfare();
+        } else {
+            const best = ScoreStore.getGameData('bunshou');
+            bestRecordMsgEl.innerText = best.bestTime ? `(自己ベスト: ${best.bestTime}秒)` : '';
+        }
+
         if (backBtn) { backBtn.classList.remove('hidden'); }
     }
 

@@ -4,25 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>たしざんゲーム</title>
+    <!-- 共通スタイルシート -->
+    <link rel="stylesheet" href="css/game-common.css">
     <style>
         body {
-            font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #eef9ff; /* やさしいみずいろ */
+            background-color: #eef9ff;
         }
         #game-container {
-            text-align: center;
-            background: white;
-            padding: 30px;
-            border-radius: 30px; /* まるっこく */
-            border: 6px solid #ffeb3b; /* きいろいわく */
+            border: 6px solid #ffeb3b;
             box-shadow: 0 8px 0 #dedede;
             width: 340px;
+            padding: 30px;
         }
         #score-board {
             font-size: 20px;
@@ -61,7 +53,7 @@
             font-size: 24px;
             font-weight: bold;
             cursor: pointer;
-            background-color: #4caf50; /* みどりいろ */
+            background-color: #4caf50;
             color: white;
             border: none;
             border-radius: 50px;
@@ -76,14 +68,14 @@
         #feedback {
             font-size: 26px;
             font-weight: bold;
-            height: 80px; /* はなまる用に少し広げました */
+            height: 80px;
             margin-top: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
         }
-        .correct { color: #ff1744; } /* あかいはなまる */
+        .correct { color: #ff1744; }
         .incorrect { color: #2196f3; }
         .hanamaru {
             font-size: 40px;
@@ -93,6 +85,9 @@
 </head>
 <body>
 
+<a href="index.html" class="back-to-menu">🏠 メニュー</a>
+<div class="wrapper">
+
 <div id="game-container">
     <div id="score-board">💮 せいかい: <span id="score">0</span> もん</div>
     <div id="question">? + ? =</div>
@@ -101,6 +96,7 @@
     <button onclick="checkAnswer()" id="action-btn">こたえる</button>
     
     <div id="feedback"></div>
+</div>
 </div>
 
 <script>

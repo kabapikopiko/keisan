@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ゲームタイトル - 共通テンプレート</title>
+  <!-- 共通スタイルの読み込み -->
+  <link rel="stylesheet" href="css/game-common.css">
+  
+  <style>
+    /* このゲーム固有のスタイルのみをここに記述します */
+    /* 例: 背景色やテーマカラーを変えたい場合 */
+    /*
+    :root {
+      --primary-color: #ec4899;
+    }
+    */
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <!-- ヘッダー -->
+    <header class="game-header">
+      <h1 class="game-title">計算ゲーム</h1>
+      <p class="game-desc">問題をといてスコアをのばそう！</p>
+    </header>
+
+    <!-- ステータス（スコア・タイマー等） -->
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-label">スコア</span>
+        <span id="score" class="status-value">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">残り時間</span>
+        <span id="timer" class="status-value timer">30</span>
+      </div>
+    </div>
+
+    <!-- 問題表示カード -->
+    <div class="question-card">
+      <div id="question" class="question-text">7 + 5 = ?</div>
+    </div>
+
+    <!-- パターンA: 4択ボタンの場合 -->
+    <div class="choice-grid">
+      <button class="btn-choice">10</button>
+      <button class="btn-choice">11</button>
+      <button class="btn-choice">12</button>
+      <button class="btn-choice">13</button>
+    </div>
+
+    <!-- パターンB: 数字入力＆送信の場合（必要に応じて使用） -->
+    <!--
+    <div>
+      <input type="number" class="answer-input" placeholder="答えを入力" />
+      <button class="btn btn-primary btn-block">決定</button>
+    </div>
+    -->
+
+    <!-- パターンC: テンキー操作の場合（必要に応じて使用） -->
+    <!--
+    <div class="numpad-grid">
+      <button class="btn-num">1</button>
+      <button class="btn-num">2</button>
+      <button class="btn-num">3</button>
+      <button class="btn-num">4</button>
+      <button class="btn-num">5</button>
+      <button class="btn-num">6</button>
+      <button class="btn-num">7</button>
+      <button class="btn-num">8</button>
+      <button class="btn-num">9</button>
+      <button class="btn-num">C</button>
+      <button class="btn-num">0</button>
+      <button class="btn-num">↵</button>
+    </div>
+    -->
+
+    <!-- フッター操作ボタン -->
+    <button class="btn btn-secondary btn-block">リスタート</button>
+  </div>
+
+  <script>
+    // ゲームロジックをここに記述
+  </script>
+</body>
+</html>

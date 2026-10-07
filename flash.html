@@ -4,30 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>スーパープラチナ フラッシュあんざん</title>
+    <!-- 共通スタイルシート -->
+    <link rel="stylesheet" href="css/game-common.css">
     <style>
-        html, body {
-            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; position: fixed;
+        body {
             background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); 
-            font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', sans-serif;
-            user-select: none; -webkit-user-select: none;
         }
 
         .back-to-menu {
-            position: absolute; top: 15px; left: 15px; background-color: #ffffff; color: #2980b9;
-            border: 3px solid #3498db; padding: 6px 14px; border-radius: 30px; font-size: 14px; font-weight: bold;
-            text-decoration: none; box-shadow: 0 4px 0 #2980b9; z-index: 10;
-            transition: opacity 0.2s ease, visibility 0.2s; touch-action: manipulation;
+            color: #2980b9;
+            border-color: #3498db;
+            box-shadow: 0 4px 0 #2980b9;
         }
-        .back-to-menu:active { transform: translateY(2px); box-shadow: 0 2px 0 #2980b9; }
-        .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
-        .wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
 
         #game-container {
-            text-align: center; background: #ffffff; padding: 15px; border-radius: 35px; 
-            border: 6px solid #3498db; box-shadow: 0 10px 0 #2980b9, 0 15px 30px rgba(0,0,0,0.15);
-            width: 100%; max-width: 340px; height: 92vh; max-height: 580px; box-sizing: border-box;
-            position: relative; display: flex; flex-direction: column; justify-content: space-between;
+            border: 6px solid #3498db;
+            box-shadow: 0 10px 0 #2980b9, 0 15px 30px rgba(0,0,0,0.15);
+            width: 100%; max-width: 340px; height: 92vh; max-height: 580px;
         }
 
         #setup-screen { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; overflow-y: auto; }
@@ -57,15 +50,7 @@
         #play-screen { display: none; height: 100%; flex-direction: column; justify-content: space-between; }
         .game-header h2 { margin: 0 0 5px 0; color: #2c3e50; font-size: 16px; }
 
-        #history-board { display: flex; justify-content: center; gap: 4px; margin-bottom: 5px; }
-        .dot {
-            width: 24px; height: 24px; border-radius: 50%; background-color: #f1f2f6;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: bold; color: #a4b0be; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-        }
         .dot.current { border: 2px solid #3498db; background-color: #fff; color: #3498db; transform: scale(1.05); }
-        .dot.o { background-color: #2ecc71; color: white; box-shadow: 0 2px 0 #27ae60; }
-        .dot.x { background-color: #e74c3c; color: white; box-shadow: 0 2px 0 #c0392b; }
 
         .question-zone {
             background-color: #2c3e50; border-radius: 25px; margin: 10px 0; flex-grow: 1;
@@ -89,37 +74,6 @@
             border-bottom: 6px solid #3498db; color: #3498db; text-align: center; background-color: #fff; border-radius: 8px 8px 0 0;
         }
 
-        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
-        .key {
-            background-color: #f5f6fa; border: none; border-bottom: 5px solid #dcdde1; border-radius: 15px;
-            font-size: 26px; font-weight: bold; color: #2f3640; padding: 10px 0; cursor: pointer; transition: 0.05s;
-            touch-action: manipulation;
-        }
-        .key:active { transform: translateY(3px); border-bottom-width: 2px; }
-        .key-num { background-color: #fff; border-bottom-color: #ced6e0; }
-        .key-clear { background-color: #ffae34; border-bottom-color: #cc8412; color: white; font-size: 18px; }
-        .key-enter { grid-column: span 2; background-color: #2ed573; border-bottom-color: #26af5f; color: white; font-size: 22px; }
-
-        #flash-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(255,255,255,0.95); border-radius: 29px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.1s ease;
-        }
-        #flash-overlay.active { opacity: 1; }
-        #flash-mark { font-size: 100px; }
-        #flash-text { font-size: 22px; font-weight: bold; margin-top: 10px; }
-
-        #result-screen { display: none; height: 100%; flex-direction: column; justify-content: center; align-items: center; }
-        .time-label { font-size: 18px; color: #7f8c8d; margin-bottom: 5px; }
-        .time-text { font-size: 42px; color: #2980b9; font-weight: bold; margin-bottom: 15px; text-shadow: 1px 1px 0 white; }
-        .btn-restart {
-            background-color: #2ed573; color: white; border: none; padding: 14px 28px; font-size: 20px; font-weight: bold;
-            border-radius: 50px; border-bottom: 6px solid #26af5f; cursor: pointer; width: 100%;
-            box-shadow: 0 6px 15px rgba(46, 213, 115, 0.3); touch-action: manipulation;
-        }
-
-        .particle { position: absolute; pointer-events: none; border-radius: 50%; z-index: 999; }
         @keyframes pop { 0% { transform: scale(0.9); } 100% { transform: scale(1); } }
     </style>
 </head>

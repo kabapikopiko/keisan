@@ -4,14 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>解き方を叩き込む！わりざん筆算【全パターン網羅版】</title>
+  <!-- 共通スタイルシート -->
+  <link rel="stylesheet" href="css/game-common.css">
   <style>
-    * { box-sizing: border-box; user-select: none; }
     body {
-      font-family: 'Hiragino Maru Gothic ProN', 'Meiryo', sans-serif;
       background: linear-gradient(135deg, #a8edf0 0%, #fed6e3 100%);
-      margin: 0; padding: 10px;
       display: flex; justify-content: center; align-items: center;
-      min-height: 100vh;
     }
     .card {
       background: #ffffff;
@@ -96,19 +94,14 @@
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
       max-width: 280px; margin: 0 auto;
     }
-    .key {
-      background: #f1f5f9; border: none; border-radius: 10px;
-      font-size: 19px; font-weight: bold; color: #1e293b;
-      padding: 9px 0; cursor: pointer; box-shadow: 0 3px 0 #cbd5e1;
-      touch-action: manipulation;
-    }
-    .key:active { transform: translateY(3px); box-shadow: none; }
     .key-zero { grid-column: span 2; }
     .key-clear { background: #fee2e2; color: #dc2626; box-shadow: 0 3px 0 #fca5a5; }
   </style>
 </head>
 <body>
 
+<a href="index.html" class="back-to-menu">🏠 メニュー</a>
+<div class="wrapper">
 <div class="card">
   <h1>➗ ひっさん解き方マスター</h1>
 
@@ -116,6 +109,14 @@
   <div class="status-bar">
     <span>クリア数: <span id="solve-count" class="count-badge">0</span> 問</span>
     <span id="rem-badge" style="color: #d97706;">あまりなし</span>
+  </div>
+
+  <!-- 💡 小学生用 筆算4ステップナビゲーションバー -->
+  <div id="hissan-step-bar" style="display: flex; justify-content: space-around; background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 6px 4px; margin-bottom: 8px; font-size: 11px; font-weight: bold; color: #64748b;">
+    <span id="step-1" style="padding: 2px 6px; border-radius: 8px; background: #3b82f6; color: #fff;">1. たてる(÷)</span>
+    <span id="step-2" style="padding: 2px 6px; border-radius: 8px;">2. かける(×)</span>
+    <span id="step-3" style="padding: 2px 6px; border-radius: 8px;">3. ひく(－)</span>
+    <span id="step-4" style="padding: 2px 6px; border-radius: 8px;">4. おろす(↓)</span>
   </div>
 
   <!-- 全7コース選択ドロップダウン -->
@@ -151,10 +152,11 @@
     <button class="key" onclick="pressNum(2)">2</button>
     <button class="key" onclick="pressNum(3)">3</button>
     <button class="key key-zero" onclick="pressNum(0)">0</button>
-    <button class="key key-clear" onclick="pressClear()">けす</button>
   </div>
 </div>
+</div>
 
+<script src="js/game-common.js"></script>
 <script>
   let mode = 1;
   let divisor = 0, dividend = 0, remainder = 0;
@@ -165,6 +167,13 @@
   
   let tempWrongVal = null; 
   let wrongReason = "";
+
+  // ⌨️ 物理キーボード連携
+  KeyboardHelper.bindNumPad(
+    (numKey) => pressNum(parseInt(numKey)),
+    null,
+    () => pressClear()
+  );
 
   function changeMode(m) {
     mode = parseInt(m, 10);
@@ -235,6 +244,15 @@
   }
 
   function render() {
+    // 💡 ステップインジケーターのハイライト
+    for (let s = 1; s <= 4; s++) {
+      const el = document.getElementById(`step-${s}`);
+      if (el) {
+        el.style.background = (s === 1) ? '#3b82f6' : 'transparent';
+        el.style.color = (s === 1) ? '#fff' : '#64748b';
+      }
+    }
+
     const grid = document.getElementById('grid');
     grid.innerHTML = '';
 
@@ -365,6 +383,7 @@
     let correctVal = qDigits[currentStep];
 
     if (val === correctVal) {
+      sounds.playCorrect(currentStep + 1);
       tempWrongVal = null;
       wrongReason = "";
       userAnswers[currentStep] = val;
@@ -376,16 +395,20 @@
         let finalRem = dividend % divisor;
         let msgStr = finalRem > 0 ? `🎉 正解！あまりは【${finalRem}】` : "🎉 すごい！ 割り切れた！";
         setMessage(msgStr, "ok");
+        FXHelper.createConfetti(20);
+        sounds.playFanfare();
+        ScoreStore.saveGameData('warizanz', { score: solvedCount * 100, stars: Math.min(3, Math.floor(solvedCount / 3) + 1) });
         render();
 
         setTimeout(() => {
           initProblem();
-        }, 1300);
+        }, 1400);
       } else {
         setMessage("✨ 正解！ 次の桁の商を立てよう", "ok");
         render();
       }
     } else {
+      sounds.playIncorrect();
       tempWrongVal = val;
       if (val > correctVal) {
         wrongReason = 'too_big';
@@ -399,6 +422,7 @@
   }
 
   function pressClear() {
+    sounds.playClick();
     tempWrongVal = null;
     wrongReason = "";
     setMessage("黄色のマスに数字を入れてね！", "ok");

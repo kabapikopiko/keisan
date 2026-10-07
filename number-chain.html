@@ -4,47 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ナンバー・チェイン (Number Chain)</title>
+    <!-- 共通スタイルシート -->
+    <link rel="stylesheet" href="css/game-common.css">
     <style>
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            position: fixed;
+        body {
             background: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%);
-            font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
         }
 
-        .wrapper {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            box-sizing: border-box;
+        .back-to-menu {
+            color: #1e90ff;
+            border-color: #70a1ff;
+            box-shadow: 0 4px 0 #1e90ff;
         }
 
         #game-container {
-            text-align: center;
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 35px; 
             border: 6px solid #70a1ff; 
             box-shadow: 0 10px 0 #1e90ff, 0 15px 30px rgba(0,0,0,0.2);
             width: 100%;
             max-width: 360px;
             height: 94vh;
             max-height: 620px; 
-            box-sizing: border-box;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
         }
 
         /* ヘッダー */
@@ -191,6 +170,8 @@
     </style>
 </head>
 <body>
+
+<a href="index.html" class="back-to-menu">🏠 メニュー</a>
 
 <div class="wrapper">
     <div id="game-container">

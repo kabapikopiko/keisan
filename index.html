@@ -4,113 +4,133 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>たのしい！さんすう・けいさんゲーム</title>
+    <!-- 共通スタイルシート -->
+    <link rel="stylesheet" href="css/game-common.css">
     <style>
         body {
-            font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%); /* やさしいパステル背景 */
-            margin: 0;
-            padding: 20px;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
+            padding: 20px 10px;
+            overflow-y: auto;
+            position: static;
         }
 
         .menu-container {
             background-color: white;
             border-radius: 30px;
-            border: 6px solid #badeef; /* まるっこい枠線 */
+            border: 6px solid #badeef;
             box-shadow: 0 12px 0 #93c5fd, 0 20px 30px rgba(0,0,0,0.1);
-            padding: 30px 20px;
+            padding: 25px 18px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
+            margin: auto;
         }
 
         h1 {
             color: #1e3a8a;
-            font-size: 28px;
-            margin: 0 0 5px 0;
+            font-size: 26px;
+            margin: 0 0 4px 0;
             text-shadow: 2px 2px 0px #f0fdf4;
         }
 
         p.subtitle {
             color: #64748b;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
-            margin: 0 0 25px 0;
+            margin: 0 0 20px 0;
         }
 
         .menu-grid {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
 
-        /* ✨ ボタンの共通スタイル（ぷっくり立体感を出しました） */
+        /* ✨ ボタンの共通スタイル（ぷっくり立体感） */
         .menu-btn {
             display: block;
             text-decoration: none;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            padding: 16px;
-            border-radius: 20px;
+            padding: 14px 12px;
+            border-radius: 18px;
             transition: transform 0.05s, box-shadow 0.05s;
             position: relative;
-            touch-action: manipulation; /* 📱 ズーム対策 */
+            touch-action: manipulation;
         }
 
         .menu-btn:active {
             transform: translateY(4px);
         }
 
-        /* 🎨 ゲームごとのぷっくり色分け */
+        /* 🎨 ゲームごとの色分け */
         .btn-flash {
             background-color: #ff9f43;
-            border-bottom: 6px solid #e67e22;
+            border-bottom: 5px solid #e67e22;
         }
         .btn-flash:active { border-bottom-width: 2px; }
 
         .btn-tashi {
             background-color: #ff6b6b;
-            border-bottom: 6px solid #ee5253;
+            border-bottom: 5px solid #ee5253;
         }
         .btn-tashi:active { border-bottom-width: 2px; }
 
         .btn-hiki {
             background-color: #54a0ff;
-            border-bottom: 6px solid #2e86de;
+            border-bottom: 5px solid #2e86de;
         }
         .btn-hiki:active { border-bottom-width: 2px; }
 
-        /* 🆕 文章題用の新ボタン（学校の黒板・ノートをイメージした緑と茶色） */
+        .btn-keisan2 {
+            background-color: #ff7675;
+            border-bottom: 5px solid #d63031;
+        }
+        .btn-keisan2:active { border-bottom-width: 2px; }
+
         .btn-bunshou {
             background-color: #10b981;
-            border-bottom: 6px solid #059669;
+            border-bottom: 5px solid #059669;
         }
         .btn-bunshou:active { border-bottom-width: 2px; }
 
-        /* なぞりゲーム用の新ボタン */
+        .btn-wari {
+            background-color: #3b82f6;
+            border-bottom: 5px solid #1d4ed8;
+        }
+        .btn-wari:active { border-bottom-width: 2px; }
+
+        .btn-gunman {
+            background-color: #f59e0b;
+            border-bottom: 5px solid #b45309;
+        }
+        .btn-gunman:active { border-bottom-width: 2px; }
+
+        .btn-chain {
+            background-color: #8b5cf6;
+            border-bottom: 5px solid #6d28d9;
+        }
+        .btn-chain:active { border-bottom-width: 2px; }
+
         .btn-nazori {
-            background-color: #9c27b0;
-            border-bottom: 6px solid #7b1fa2;
+            background-color: #06b6d4;
+            border-bottom: 5px solid #0891b2;
         }
         .btn-nazori:active { border-bottom-width: 2px; }
 
         .btn-desc {
-            display: block;
-            font-size: 13px;
+            display: inline-block;
+            font-size: 12px;
             font-weight: normal;
             margin-top: 4px;
-            opacity: 0.9;
-            background: rgba(0, 0, 0, 0.1);
-            padding: 4px 10px;
-            border-radius: 10px;
-            display: inline-block;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 3px 8px;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -127,13 +147,18 @@
         </a>
 
         <a href="tashizan.html" class="menu-btn btn-tashi">
-            ➕ たしざんゲーム
-            <br><span class="btn-desc">たしざんの れんしゅう</span>
+            ➕ たしざんタイムアタック
+            <br><span class="btn-desc">10問スピード勝負！</span>
         </a>
 
         <a href="hikizan.html" class="menu-btn btn-hiki">
-            ➖ ひきざんゲーム
-            <br><span class="btn-desc">ひきざんの れんしゅう</span>
+            ➖ ひきざんタイムアタック
+            <br><span class="btn-desc">くり下がりも練習できる！</span>
+        </a>
+
+        <a href="keisan2.html" class="menu-btn btn-keisan2">
+            ⏱️ 四則けいさんアタック
+            <br><span class="btn-desc">＋ － × ÷ コンボをつなげ！</span>
         </a>
 
         <a href="bunshou.html" class="menu-btn btn-bunshou">
@@ -141,9 +166,24 @@
             <br><span class="btn-desc">おはなしを よんで こたえよう！</span>
         </a>
 
+        <a href="warizanz.html" class="menu-btn btn-wari">
+            ➗ わりざん筆算マスター
+            <br><span class="btn-desc">ひっ算の解き方をステップ練習</span>
+        </a>
+
+        <a href="gumnan.html" class="menu-btn btn-gunman">
+            🤠 計算ガンマン
+            <br><span class="btn-desc">正しい答えを早撃ちシューティング！</span>
+        </a>
+
+        <a href="number-chain.html" class="menu-btn btn-chain">
+            🔗 ナンバー・チェイン
+            <br><span class="btn-desc">なぞって目標の数をつくるパズル</span>
+        </a>
+
         <a href="neongame.html" class="menu-btn btn-nazori">
             ✏️ なぞりゲーム
-            <br><span class="btn-desc">画面の線をなぞってみよう</span>
+            <br><span class="btn-desc">光るルートをおぼえてなぞろう</span>
         </a>
     </div>
 </div>

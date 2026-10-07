@@ -4,31 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>計算ガンマン - 悪者をたおせ！</title>
+    <!-- 共通スタイルシート -->
+    <link rel="stylesheet" href="css/game-common.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=MPLUSRounded1c:wght@800;900&display=swap');
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            position: fixed;
+        body {
             background: #1e0c03;
             font-family: 'MPLUSRounded1c', 'Fredoka One', sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
         }
 
-        .wrapper {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            box-sizing: border-box;
+        .back-to-menu {
+            color: #ff9f43;
+            border-color: #feca57;
+            box-shadow: 0 4px 0 #ee5253;
         }
 
         #game-container {
@@ -361,6 +350,8 @@
     </style>
 </head>
 <body>
+
+<a href="index.html" class="back-to-menu">🏠 メニュー</a>
 
 <div class="wrapper">
     <div id="game-container">
