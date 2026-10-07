@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>レジ打ちマスター！おつりはこれだけ - さんすうパーク</title>
+    <link rel="stylesheet" href="css/game-common.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #fef2f2 0%, #ffe4e6 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box;
+            font-family: sans-serif; user-select: none;
+        }
+        .game-container {
+            background-color: white; border-radius: 24px; border: 6px solid #f43f5e;
+            box-shadow: 0 10px 0 #be123c, 0 15px 25px rgba(0,0,0,0.15);
+            padding: 16px; width: 100%; max-width: 420px; text-align: center; box-sizing: border-box;
+        }
+        h1 { color: #be123c; font-size: 22px; margin: 0 0 8px 0; }
+        .info-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: #fff1f2; border: 3px solid #fecdd3; border-radius: 14px;
+            padding: 8px 14px; margin-bottom: 12px; font-weight: bold; font-size: 16px; color: #be123c;
+        }
+        /* レジ・お会計エリア */
+        .register-card {
+            background: #fff8f8; border: 3px solid #fda4af; border-radius: 18px;
+            padding: 12px; margin-bottom: 12px; text-align: left;
+        }
+        .receipt-row {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 18px; font-weight: bold; color: #334155; margin-bottom: 6px;
+        }
+        .receipt-row.paid { color: #2563eb; border-bottom: 2px dashed #cbd5e1; padding-bottom: 6px; }
+        .receipt-row.change { font-size: 22px; color: #e11d48; margin-top: 6px; }
+
+        /* コインタップエリア */
+        .coin-area { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+        .coin-btn {
+            width: 58px; height: 58px; border-radius: 50%; border: 3px solid #be123c;
+            background: #ffe4e6; color: #9f1239; font-weight: bold; font-size: 14px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            box-shadow: 0 4px 0 #be123c; touch-action: manipulation;
+        }
+        .coin-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #be123c; }
+
+        .pay-bar {
+            font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 12px;
+            background: #f8fafc; padding: 10px; border-radius: 12px; border: 2px solid #e2e8f0;
+        }
+        .action-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 8px; }
+        .reset-btn {
+            background: #ef4444; color: white; border: none; border-bottom: 4px solid #b91c1c;
+            border-radius: 12px; font-weight: bold; padding: 10px 0; cursor: pointer;
+        }
+        .pay-btn {
+            background: #22c55e; color: white; border: none; border-bottom: 4px solid #15803d;
+            border-radius: 12px; font-weight: bold; font-size: 18px; padding: 10px 0; cursor: pointer;
+        }
+        .overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+            display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px;
+        }
+        .modal {
+            background: white; border-radius: 20px; padding: 20px; max-width: 360px; width: 100%;
+            border: 5px solid #f43f5e; text-align: center;
+        }
+        .start-btn, .back-btn {
+            display: inline-block; width: 100%; padding: 12px 0; font-size: 16px; font-weight: bold;
+            color: white; background-color: #f43f5e; border: none; border-bottom: 5px solid #be123c;
+            border-radius: 14px; cursor: pointer; text-decoration: none; margin-top: 8px; box-sizing: border-box;
+        }
+        .back-btn { background-color: #64748b; border-bottom-color: #475569; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>🏪 レジ打ちマスター！</h1>
+    <div class="info-bar">
+        <span>客数: <span id="q-num">1</span> / 10 人</span>
+        <span>タイム: <span id="timer">0.0</span> 秒</span>
+    </div>
+
+    <!-- お会計レシート情報 -->
+    <div class="register-card">
+        <div class="receipt-row">
+            <span>🛒 しょうひんのねだん:</span>
+            <span><span id="price-val">0</span> 円</span>
+        </div>
+        <div class="receipt-row paid">
+            <span>💵 あずかった おかね:</span>
+            <span><span id="paid-val">0</span> 円</span>
+        </div>
+        <div class="receipt-row change">
+            <span>💡 おつり:</span>
+            <span><span id="target-change-val">0</span> 円</span>
+        </div>
+    </div>
+
+    <!-- おつり渡しのコイン -->
+    <div class="coin-area">
+        <button class="coin-btn" onclick="addCoin(100)">100円</button>
+        <button class="coin-btn" onclick="addCoin(50)">50円</button>
+        <button class="coin-btn" onclick="addCoin(10)">10円</button>
+        <button class="coin-btn" onclick="addCoin(5)">5円</button>
+        <button class="coin-btn" onclick="addCoin(1)">1円</button>
+    </div>
+
+    <div class="pay-bar">渡すおつり: <span id="current-change" style="color:#e11d48;">0</span> 円</div>
+
+    <div class="action-grid">
+        <button class="reset-btn" onclick="resetChange()">やりなおし</button>
+        <button class="pay-btn" onclick="checkChange()">おつりをわたす！</button>
+    </div>
+
+    <a href="index.html" class="back-btn" style="padding:8px 0; font-size:14px;">🏠 メニューにもどる</a>
+</div>
+
+<div id="result-modal" class="overlay hidden">
+    <div class="modal">
+        <h2 style="color:#f43f5e; margin-top:0;">🎉 レジ打ちマスター！</h2>
+        <p style="font-size:18px;">タイム: <b id="final-time" style="color:#f43f5e;"></b> 秒</p>
+        <button class="start-btn" onclick="startGame()">もういちど あそぶ</button>
+        <a href="index.html" class="back-btn">メニューにもどる</a>
+    </div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (type === 'coin') {
+            osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+            osc.start(now); osc.stop(now + 0.08);
+        } else if (type === 'ok') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.exponentialRampToValueAtTime(1046, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'ng') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now);
+            gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'clear') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1);
+            osc.frequency.setValueAtTime(783, now + 0.2); osc.frequency.setValueAtTime(1046, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        }
+    }
+
+    let qCount = 0, currentPrice = 0, currentPaid = 0, targetChange = 0;
+    let currentChangeInput = 0, startTime = 0, timerInterval = null;
+
+    function startGame() {
+        qCount = 0; startTime = Date.now();
+        document.getElementById('result-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            document.getElementById('timer').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+        }, 100);
+        nextQuestion();
+    }
+
+    function addCoin(val) {
+        playSound('coin');
+        currentChangeInput += val;
+        document.getElementById('current-change').textContent = currentChangeInput;
+    }
+
+    function resetChange() {
+        currentChangeInput = 0;
+        document.getElementById('current-change').textContent = currentChangeInput;
+    }
+
+    function checkChange() {
+        if (currentChangeInput === targetChange) {
+            playSound('ok');
+            nextQuestion();
+        } else {
+            playSound('ng');
+            resetChange();
+        }
+    }
+
+    function nextQuestion() {
+        qCount++;
+        if (qCount > 10) {
+            clearInterval(timerInterval); playSound('clear');
+            document.getElementById('final-time').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('result-modal').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('q-num').textContent = qCount;
+        currentChangeInput = 0;
+        document.getElementById('current-change').textContent = 0;
+
+        // 商品の値段 (10円〜195円)
+        currentPrice = Math.floor(Math.random() * 38 + 2) * 5; 
+        
+        // お客さんが出すお金 (100円、200円、または端数出し)
+        if (currentPrice <= 95) {
+            const hasFraction = Math.random() < 0.3; // 30%の確率で端数だし（例: 73円に対して103円渡す）
+            currentPaid = hasFraction ? (100 + (currentPrice % 10)) : 100;
+        } else {
+            const hasFraction = Math.random() < 0.3;
+            currentPaid = hasFraction ? (200 + (currentPrice % 10)) : 200;
+        }
+
+        targetChange = currentPaid - currentPrice;
+
+        document.getElementById('price-val').textContent = currentPrice;
+        document.getElementById('paid-val').textContent = currentPaid;
+        document.getElementById('target-change-val').textContent = targetChange;
+    }
+
+    startGame();
+</script>
+</body>
+</html>

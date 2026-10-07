@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ばいすう タップ！ - さんすうパーク</title>
+    <link rel="stylesheet" href="css/game-common.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .game-container {
+            background-color: white;
+            border-radius: 24px;
+            border: 6px solid #f59e0b;
+            box-shadow: 0 10px 0 #d97706, 0 15px 25px rgba(0,0,0,0.15);
+            padding: 16px;
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #b45309;
+            font-size: 22px;
+            margin: 0 0 8px 0;
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fffbebfb;
+            border: 3px solid #fde68a;
+            border-radius: 14px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #78350f;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .num-btn {
+            aspect-ratio: 1;
+            background-color: #ffffff;
+            border: 3px solid #cbd5e1;
+            border-bottom: 5px solid #94a3b8;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #334155;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.05s, background-color 0.2s;
+            touch-action: manipulation;
+        }
+
+        .num-btn:active {
+            transform: translateY(2px);
+        }
+
+        .num-btn.cleared {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .num-btn.miss {
+            background-color: #fca5a5 !important;
+            border-color: #ef4444 !important;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 360px;
+            width: 100%;
+            border: 5px solid #f59e0b;
+            text-align: center;
+        }
+
+        .dan-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .dan-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-bottom: 4px solid #1d4ed8;
+            border-radius: 12px;
+            padding: 12px 0;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .dan-btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+
+        .start-btn, .back-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 12px 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #10b981;
+            border: none;
+            border-bottom: 5px solid #059669;
+            border-radius: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background-color: #64748b;
+            border-bottom-color: #475569;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1 id="game-title">🎯 ばいすう タップ！</h1>
+    
+    <div class="info-bar">
+        <span>のこり: <span id="remaining-count" style="color:#e11d48; font-size:20px;">10</span> こ</span>
+        <span>タイム: <span id="timer-display" style="color:#0284c7; font-size:20px;">0.0</span> 秒</span>
+    </div>
+
+    <div class="grid-container" id="grid"></div>
+
+    <button class="back-btn" onclick="showSelectModal()" style="padding: 8px 0; font-size: 14px; margin-top:0;">🔄 だんを えらびなおす</button>
+</div>
+
+<!-- 段選択画面 -->
+<div id="select-modal" class="overlay">
+    <div class="modal">
+        <h2 style="color:#b45309; margin-top:0; font-size:20px;">なんの「ばいすう」にする？</h2>
+        <p style="font-size:13px; color:#64748b; margin-bottom:10px;">えらんだ数字の「九九の答え」をさがそう！</p>
+        
+        <div class="dan-grid">
+            <button class="dan-btn" onclick="selectDan(2)">2の段</button>
+            <button class="dan-btn" onclick="selectDan(3)">3の段</button>
+            <button class="dan-btn" onclick="selectDan(4)">4の段</button>
+            <button class="dan-btn" onclick="selectDan(5)">5の段</button>
+            <button class="dan-btn" onclick="selectDan(6)">6の段</button>
+            <button class="dan-btn" onclick="selectDan(7)">7の段</button>
+            <button class="dan-btn" onclick="selectDan(8)">8の段</button>
+            <button class="dan-btn" onclick="selectDan(9)">9の段</button>
+        </div>
+
+        <a href="index.html" class="back-btn">🏠 メニューにもどる</a>
+    </div>
+</div>
+
+<!-- クリア画面 -->
+<div id="result-modal" class="overlay hidden">
+    <div class="modal">
+        <h2 style="color:#10b981; margin-top:0; font-size:26px;">🎉 クリア！</h2>
+        <p style="font-size:18px; color:#334155;">きろく: <b id="final-time" style="color:#0284c7; font-size:24px;"></b> 秒</p>
+        <button class="start-btn" onclick="startGame()">もういちど あそぶ</button>
+        <button class="start-btn" onclick="showSelectModal()" style="background-color:#3b82f6; border-bottom-color:#1d4ed8;">ほかの「だん」であそぶ</button>
+        <a href="index.html" class="back-btn">メニューにもどる</a>
+    </div>
+</div>
+
+<script>
+    // Web Audio API による効果音
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'ok') {
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        } else if (type === 'ng') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        } else if (type === 'clear') {
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.1);
+            osc.frequency.setValueAtTime(783.99, now + 0.2);
+            osc.frequency.setValueAtTime(1046.50, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        }
+    }
+
+    let currentDan = 3;
+    let remaining = 10;
+    let startTime = 0;
+    let timerInterval = null;
+    let isPlaying = false;
+
+    function showSelectModal() {
+        isPlaying = false;
+        clearInterval(timerInterval);
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('select-modal').classList.remove('hidden');
+    }
+
+    function selectDan(dan) {
+        currentDan = dan;
+        document.getElementById('game-title').textContent = `🎯 ${currentDan}のばいすう タップ！`;
+        document.getElementById('select-modal').classList.add('hidden');
+        startGame();
+    }
+
+    function startGame() {
+        document.getElementById('result-modal').classList.add('hidden');
+        
+        remaining = 10;
+        document.getElementById('remaining-count').textContent = remaining;
+        
+        // 正解の数字（例: 9の段なら 9, 18, 27 ... 90）
+        const correctNumbers = Array.from({length: 10}, (_, i) => currentDan * (i + 1));
+        
+        // ダミーの数字（1〜[段×10]の中から、正解以外をランダムに20個選ぶ）
+        const maxNum = currentDan * 10;
+        const dummyNumbers = [];
+        for (let i = 1; i <= maxNum; i++) {
+            if (i % currentDan !== 0) {
+                dummyNumbers.push(i);
+            }
+        }
+        // ダミーをシャッフルして20個抽出
+        for (let i = dummyNumbers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [dummyNumbers[i], dummyNumbers[j]] = [dummyNumbers[j], dummyNumbers[i]];
+        }
+        const selectedDummies = dummyNumbers.slice(0, 20);
+
+        // 正解10個 + ダミー20個 = 合計30個を結合してシャッフル
+        const allNumbers = [...correctNumbers, ...selectedDummies];
+        for (let i = allNumbers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allNumbers[i], allNumbers[j]] = [allNumbers[j], allNumbers[i]];
+        }
+
+        // マス目を描画
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        
+        allNumbers.forEach(num => {
+            const btn = document.createElement('button');
+            btn.className = 'num-btn';
+            btn.textContent = num;
+            btn.onclick = () => handleTap(btn, num);
+            grid.appendChild(btn);
+        });
+
+        startTime = Date.now();
+        isPlaying = true;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (!isPlaying) return;
+            const diff = (Date.now() - startTime) / 1000;
+            document.getElementById('timer-display').textContent = diff.toFixed(1);
+        }, 100);
+    }
+
+    function handleTap(btn, num) {
+        if (!isPlaying || btn.classList.contains('cleared')) return;
+
+        if (num % currentDan === 0) {
+            // 正解
+            playSound('ok');
+            btn.classList.add('cleared');
+            remaining--;
+            document.getElementById('remaining-count').textContent = remaining;
+
+            if (remaining === 0) {
+                // クリア
+                isPlaying = false;
+                clearInterval(timerInterval);
+                const finalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                playSound('clear');
+                document.getElementById('final-time').textContent = finalTime;
+                setTimeout(() => {
+                    document.getElementById('result-modal').classList.remove('hidden');
+                }, 300);
+            }
+        } else {
+            // お手つき
+            playSound('ng');
+            btn.classList.add('miss');
+            setTimeout(() => btn.classList.remove('miss'), 300);
+        }
+    }
+</script>
+</body>
+</html>

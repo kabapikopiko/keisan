@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>お買い物ピッタリ - さんすうパーク</title>
+    <link rel="stylesheet" href="css/game-common.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #fefce8 0%, #fef08a 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box;
+            font-family: sans-serif; user-select: none;
+        }
+        .game-container {
+            background-color: white; border-radius: 24px; border: 6px solid #eab308;
+            box-shadow: 0 10px 0 #ca8a04, 0 15px 25px rgba(0,0,0,0.15);
+            padding: 16px; width: 100%; max-width: 420px; text-align: center; box-sizing: border-box;
+        }
+        h1 { color: #ca8a04; font-size: 22px; margin: 0 0 8px 0; }
+        .info-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: #fefce8; border: 3px solid #fde047; border-radius: 14px;
+            padding: 8px 14px; margin-bottom: 12px; font-weight: bold; font-size: 16px; color: #ca8a04;
+        }
+        .price-card {
+            background: #fffbe2; border: 3px solid #facc15; border-radius: 16px;
+            padding: 14px; margin-bottom: 12px; font-size: 26px; font-weight: bold; color: #854d0e;
+        }
+        .coin-area { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+        .coin-btn {
+            width: 58px; height: 58px; border-radius: 50%; border: 3px solid #ca8a04;
+            background: #fef08a; color: #854d0e; font-weight: bold; font-size: 14px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            box-shadow: 0 4px 0 #ca8a04;
+        }
+        .coin-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #ca8a04; }
+        .pay-bar {
+            font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 12px;
+            background: #f8fafc; padding: 10px; border-radius: 12px; border: 2px solid #e2e8f0;
+        }
+        .action-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 8px; }
+        .reset-btn {
+            background: #ef4444; color: white; border: none; border-bottom: 4px solid #b91c1c;
+            border-radius: 12px; font-weight: bold; padding: 10px 0; cursor: pointer;
+        }
+        .pay-btn {
+            background: #22c55e; color: white; border: none; border-bottom: 4px solid #15803d;
+            border-radius: 12px; font-weight: bold; font-size: 18px; padding: 10px 0; cursor: pointer;
+        }
+        .overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+            display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px;
+        }
+        .modal {
+            background: white; border-radius: 20px; padding: 20px; max-width: 360px; width: 100%;
+            border: 5px solid #eab308; text-align: center;
+        }
+        .start-btn, .back-btn {
+            display: inline-block; width: 100%; padding: 12px 0; font-size: 16px; font-weight: bold;
+            color: white; background-color: #eab308; border: none; border-bottom: 5px solid #ca8a04;
+            border-radius: 14px; cursor: pointer; text-decoration: none; margin-top: 8px; box-sizing: border-box;
+        }
+        .back-btn { background-color: #64748b; border-bottom-color: #475569; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>🪙 お買い物ピッタリ</h1>
+    <div class="info-bar">
+        <span>もんだい: <span id="q-num">1</span> / 10</span>
+        <span>タイム: <span id="timer">0.0</span> 秒</span>
+    </div>
+
+    <div class="price-card">おねだん: <span id="target-price">0</span> 円</div>
+
+    <div class="coin-area">
+        <button class="coin-btn" onclick="addCoin(100)">100円</button>
+        <button class="coin-btn" onclick="addCoin(50)">50円</button>
+        <button class="coin-btn" onclick="addCoin(10)">10円</button>
+        <button class="coin-btn" onclick="addCoin(5)">5円</button>
+        <button class="coin-btn" onclick="addCoin(1)">1円</button>
+    </div>
+
+    <div class="pay-bar">はらうお金: <span id="current-pay" style="color:#22c55e;">0</span> 円</div>
+
+    <div class="action-grid">
+        <button class="reset-btn" onclick="resetPay()">やりなおし</button>
+        <button class="pay-btn" onclick="checkPay()">ピッタリはらう！</button>
+    </div>
+
+    <a href="index.html" class="back-btn" style="padding:8px 0; font-size:14px;">🏠 メニューにもどる</a>
+</div>
+
+<div id="result-modal" class="overlay hidden">
+    <div class="modal">
+        <h2 style="color:#eab308; margin-top:0;">🎉 おかいものマスター！</h2>
+        <p style="font-size:18px;">タイム: <b id="final-time" style="color:#eab308;"></b> 秒</p>
+        <button class="start-btn" onclick="startGame()">もういちど あそぶ</button>
+        <a href="index.html" class="back-btn">メニューにもどる</a>
+    </div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (type === 'coin') {
+            osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+            osc.start(now); osc.stop(now + 0.08);
+        } else if (type === 'ok') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.exponentialRampToValueAtTime(1046, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'ng') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now);
+            gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'clear') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1);
+            osc.frequency.setValueAtTime(783, now + 0.2); osc.frequency.setValueAtTime(1046, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        }
+    }
+
+    let qCount = 0, targetPrice = 0, currentPay = 0, startTime = 0, timerInterval = null;
+
+    function startGame() {
+        qCount = 0; startTime = Date.now();
+        document.getElementById('result-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            document.getElementById('timer').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+        }, 100);
+        nextQuestion();
+    }
+
+    function addCoin(val) {
+        playSound('coin');
+        currentPay += val;
+        document.getElementById('current-pay').textContent = currentPay;
+    }
+
+    function resetPay() {
+        currentPay = 0;
+        document.getElementById('current-pay').textContent = currentPay;
+    }
+
+    function checkPay() {
+        if (currentPay === targetPrice) {
+            playSound('ok');
+            nextQuestion();
+        } else {
+            playSound('ng');
+            resetPay();
+        }
+    }
+
+    function nextQuestion() {
+        qCount++;
+        if (qCount > 10) {
+            clearInterval(timerInterval); playSound('clear');
+            document.getElementById('final-time').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('result-modal').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('q-num').textContent = qCount;
+        currentPay = 0;
+        document.getElementById('current-pay').textContent = 0;
+
+        targetPrice = Math.floor(Math.random() * 190) + 10; // 10円〜200円
+        document.getElementById('target-price').textContent = targetPrice;
+    }
+
+    startGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>とけいよみアタック - さんすうパーク</title>
+    <link rel="stylesheet" href="css/game-common.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box;
+            font-family: sans-serif; user-select: none;
+        }
+        .game-container {
+            background-color: white; border-radius: 24px; border: 6px solid #10b981;
+            box-shadow: 0 10px 0 #047857, 0 15px 25px rgba(0,0,0,0.15);
+            padding: 16px; width: 100%; max-width: 420px; text-align: center; box-sizing: border-box;
+        }
+        h1 { color: #047857; font-size: 22px; margin: 0 0 8px 0; }
+        .info-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: #f0fdf4; border: 3px solid #a7f3d0; border-radius: 14px;
+            padding: 8px 14px; margin-bottom: 12px; font-weight: bold; font-size: 16px; color: #047857;
+        }
+        canvas { background: #ffffff; border-radius: 50%; border: 4px solid #10b981; margin-bottom: 12px; }
+        .choices-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+        .choice-btn {
+            background: #10b981; color: white; border: none; border-bottom: 5px solid #047857;
+            border-radius: 14px; font-size: 20px; font-weight: bold; padding: 12px 0; cursor: pointer;
+        }
+        .choice-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+        .overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+            display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px;
+        }
+        .modal {
+            background: white; border-radius: 20px; padding: 20px; max-width: 360px; width: 100%;
+            border: 5px solid #10b981; text-align: center;
+        }
+        .start-btn, .back-btn {
+            display: inline-block; width: 100%; padding: 12px 0; font-size: 16px; font-weight: bold;
+            color: white; background-color: #10b981; border: none; border-bottom: 5px solid #047857;
+            border-radius: 14px; cursor: pointer; text-decoration: none; margin-top: 8px; box-sizing: border-box;
+        }
+        .back-btn { background-color: #64748b; border-bottom-color: #475569; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>⏰ とけいよみアタック</h1>
+    <div class="info-bar">
+        <span>もんだい: <span id="q-num">1</span> / 10</span>
+        <span>タイム: <span id="timer">0.0</span> 秒</span>
+    </div>
+
+    <canvas id="clock" width="180" height="180"></canvas>
+
+    <div class="choices-grid" id="choices"></div>
+    <a href="index.html" class="back-btn" style="padding:8px 0; font-size:14px;">🏠 メニューにもどる</a>
+</div>
+
+<div id="result-modal" class="overlay hidden">
+    <div class="modal">
+        <h2 style="color:#10b981; margin-top:0;">🎉 とけいマスター！</h2>
+        <p style="font-size:18px;">タイム: <b id="final-time" style="color:#10b981;"></b> 秒</p>
+        <button class="start-btn" onclick="startGame()">もういちど あそぶ</button>
+        <a href="index.html" class="back-btn">メニューにもどる</a>
+    </div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (type === 'ok') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.exponentialRampToValueAtTime(1046, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'ng') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now);
+            gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'clear') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1);
+            osc.frequency.setValueAtTime(783, now + 0.2); osc.frequency.setValueAtTime(1046, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        }
+    }
+
+    let qCount = 0, targetHour = 0, targetMin = 0, startTime = 0, timerInterval = null;
+
+    function drawClock(hour, min) {
+        const canvas = document.getElementById('clock');
+        const ctx = canvas.getContext('2d');
+        const radius = canvas.width / 2;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 文字盤
+        ctx.translate(radius, radius);
+        ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        for (let i = 1; i <= 12; i++) {
+            const ang = i * Math.PI / 6;
+            ctx.fillText(i.toString(), Math.sin(ang) * (radius - 18), -Math.cos(ang) * (radius - 18));
+        }
+
+        // 短針
+        const hourAng = (hour % 12 + min / 60) * Math.PI / 6;
+        ctx.beginPath(); ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b';
+        ctx.moveTo(0, 0); ctx.lineTo(Math.sin(hourAng) * (radius - 45), -Math.cos(hourAng) * (radius - 45));
+        ctx.stroke();
+
+        // 長針
+        const minAng = min * Math.PI / 30;
+        ctx.beginPath(); ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.strokeStyle = '#0284c7';
+        ctx.moveTo(0, 0); ctx.lineTo(Math.sin(minAng) * (radius - 25), -Math.cos(minAng) * (radius - 25));
+        ctx.stroke();
+
+        // 中心点
+        ctx.beginPath(); ctx.arc(0, 0, 5, 0, 2 * Math.PI); ctx.fillStyle = '#1e293b'; ctx.fill();
+        ctx.translate(-radius, -radius);
+    }
+
+    function startGame() {
+        qCount = 0; startTime = Date.now();
+        document.getElementById('result-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            document.getElementById('timer').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+        }, 100);
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        qCount++;
+        if (qCount > 10) {
+            clearInterval(timerInterval); playSound('clear');
+            document.getElementById('final-time').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('result-modal').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('q-num').textContent = qCount;
+
+        targetHour = Math.floor(Math.random() * 12) + 1;
+        targetMin = Math.floor(Math.random() * 12) * 5; // 5分刻み
+
+        drawClock(targetHour, targetMin);
+
+        const correctStr = `${targetHour}じ ${targetMin === 0 ? '00' : targetMin}ふん`;
+        const choices = [correctStr];
+
+        while (choices.length < 4) {
+            let h = Math.floor(Math.random() * 12) + 1;
+            let m = Math.floor(Math.random() * 12) * 5;
+            let str = `${h}じ ${m === 0 ? '00' : m}ふん`;
+            if (!choices.includes(str)) choices.push(str);
+        }
+        choices.sort(() => Math.random() - 0.5);
+
+        const choicesDiv = document.getElementById('choices'); choicesDiv.innerHTML = '';
+        choices.forEach(str => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn'; btn.textContent = str;
+            btn.onclick = () => {
+                if (str === correctStr) {
+                    playSound('ok'); nextQuestion();
+                } else {
+                    playSound('ng');
+                }
+            };
+            choicesDiv.appendChild(btn);
+        });
+    }
+
+    startGame();
+</script>
+</body>
+</html>

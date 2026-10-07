@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>なかまはずれ図形 - さんすうパーク</title>
+    <link rel="stylesheet" href="css/game-common.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box;
+            font-family: sans-serif; user-select: none;
+        }
+        .game-container {
+            background-color: white; border-radius: 24px; border: 6px solid #a855f7;
+            box-shadow: 0 10px 0 #7e22ce, 0 15px 25px rgba(0,0,0,0.15);
+            padding: 16px; width: 100%; max-width: 420px; text-align: center; box-sizing: border-box;
+        }
+        h1 { color: #7e22ce; font-size: 22px; margin: 0 0 8px 0; }
+        .info-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: #faf5ff; border: 3px solid #d8b4fe; border-radius: 14px;
+            padding: 8px 14px; margin-bottom: 12px; font-weight: bold; font-size: 16px; color: #7e22ce;
+        }
+        .prompt { font-size: 18px; font-weight: bold; color: #4c1d95; margin-bottom: 12px; }
+        .shapes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+        .shape-btn {
+            background: #f3e8ff; border: 4px solid #c084fc; border-radius: 16px;
+            padding: 16px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; box-shadow: 0 4px 0 #9333ea;
+        }
+        .shape-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #9333ea; }
+        .overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+            display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px;
+        }
+        .modal {
+            background: white; border-radius: 20px; padding: 20px; max-width: 360px; width: 100%;
+            border: 5px solid #a855f7; text-align: center;
+        }
+        .start-btn, .back-btn {
+            display: inline-block; width: 100%; padding: 12px 0; font-size: 16px; font-weight: bold;
+            color: white; background-color: #a855f7; border: none; border-bottom: 5px solid #7e22ce;
+            border-radius: 14px; cursor: pointer; text-decoration: none; margin-top: 8px; box-sizing: border-box;
+        }
+        .back-btn { background-color: #64748b; border-bottom-color: #475569; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>🔷 なかまはずれ図形</h1>
+    <div class="info-bar">
+        <span>もんだい: <span id="q-num">1</span> / 10</span>
+        <span>タイム: <span id="timer">0.0</span> 秒</span>
+    </div>
+
+    <div class="prompt" id="prompt-text">なかまはずれは どれ？</div>
+    <div class="shapes-grid" id="shapes"></div>
+
+    <a href="index.html" class="back-btn" style="padding:8px 0; font-size:14px;">🏠 メニューにもどる</a>
+</div>
+
+<div id="result-modal" class="overlay hidden">
+    <div class="modal">
+        <h2 style="color:#a855f7; margin-top:0;">🎉 ずけいハカセ！</h2>
+        <p style="font-size:18px;">タイム: <b id="final-time" style="color:#a855f7;"></b> 秒</p>
+        <button class="start-btn" onclick="startGame()">もういちど あそぶ</button>
+        <a href="index.html" class="back-btn">メニューにもどる</a>
+    </div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (type === 'ok') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.exponentialRampToValueAtTime(1046, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'ng') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now);
+            gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'clear') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1);
+            osc.frequency.setValueAtTime(783, now + 0.2); osc.frequency.setValueAtTime(1046, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        }
+    }
+
+    let qCount = 0, targetOddIndex = 0, startTime = 0, timerInterval = null;
+
+    const shapeTypes = [
+        { name: 'circle', svg: '<svg width="50" height="50"><circle cx="25" cy="25" r="20" fill="#a855f7"/></svg>' },
+        { name: 'square', svg: '<svg width="50" height="50"><rect x="5" y="5" width="40" height="40" fill="#a855f7"/></svg>' },
+        { name: 'triangle', svg: '<svg width="50" height="50"><polygon points="25,5 45,45 5,45" fill="#a855f7"/></svg>' },
+        { name: 'star', svg: '<svg width="50" height="50"><polygon points="25,2 32,18 49,18 35,29 40,46 25,35 9,46 14,29 1,18 17,18" fill="#a855f7"/></svg>' }
+    ];
+
+    function startGame() {
+        qCount = 0; startTime = Date.now();
+        document.getElementById('result-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            document.getElementById('timer').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+        }, 100);
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        qCount++;
+        if (qCount > 10) {
+            clearInterval(timerInterval); playSound('clear');
+            document.getElementById('final-time').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('result-modal').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('q-num').textContent = qCount;
+
+        const baseIdx = Math.floor(Math.random() * shapeTypes.length);
+        let oddIdx = Math.floor(Math.random() * shapeTypes.length);
+        while (oddIdx === baseIdx) oddIdx = Math.floor(Math.random() * shapeTypes.length);
+
+        targetOddIndex = Math.floor(Math.random() * 4);
+
+        const shapesDiv = document.getElementById('shapes'); shapesDiv.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'shape-btn';
+            btn.innerHTML = (i === targetOddIndex) ? shapeTypes[oddIdx].svg : shapeTypes[baseIdx].svg;
+            btn.onclick = () => {
+                if (i === targetOddIndex) {
+                    playSound('ok'); nextQuestion();
+                } else {
+                    playSound('ng');
+                }
+            };
+            shapesDiv.appendChild(btn);
+        }
+    }
+
+    startGame();
+</script>
+</body>
+</html>
