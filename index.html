@@ -10,25 +10,46 @@
             background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh; padding: 20px 10px; overflow-y: auto; position: static;
+            font-family: sans-serif;
         }
 
         .menu-container {
             background-color: white; border-radius: 30px; border: 6px solid #badeef;
             box-shadow: 0 12px 0 #93c5fd, 0 20px 30px rgba(0,0,0,0.1);
-            padding: 25px 18px; width: 100%; max-width: 420px; text-align: center; margin: auto;
+            padding: 22px 16px; width: 100%; max-width: 420px; text-align: center; margin: auto;
+            box-sizing: border-box;
         }
 
-        h1 { color: #1e3a8a; font-size: 26px; margin: 0 0 4px 0; text-shadow: 2px 2px 0px #f0fdf4; }
-        p.subtitle { color: #64748b; font-size: 14px; font-weight: bold; margin: 0 0 20px 0; }
-        .menu-grid { display: flex; flex-direction: column; gap: 12px; }
+        h1 { color: #1e3a8a; font-size: 24px; margin: 0 0 4px 0; text-shadow: 2px 2px 0px #f0fdf4; }
+        p.subtitle { color: #64748b; font-size: 13px; font-weight: bold; margin: 0 0 16px 0; }
 
+        /* 🗂️ カテゴリタブエリア */
+        .category-tabs {
+            display: flex; gap: 6px; margin-bottom: 16px; justify-content: space-between;
+        }
+        .tab-btn {
+            flex: 1; padding: 10px 4px; font-size: 13px; font-weight: bold; color: #64748b;
+            background-color: #f1f5f9; border: 3px solid #cbd5e1; border-radius: 14px;
+            cursor: pointer; touch-action: manipulation; transition: all 0.1s;
+        }
+        .tab-btn.active {
+            color: #1e3a8a; background-color: #e0f2fe; border-color: #3b82f6;
+            box-shadow: 0 4px 0 #2563eb; transform: translateY(-2px);
+        }
+
+        /* 🎮 ゲームリストの表示切り替え */
+        .category-content { display: none; flex-direction: column; gap: 10px; }
+        .category-content.active { display: flex; }
+
+        /* ボタン共通スタイル */
         .menu-btn {
-            display: block; text-decoration: none; color: white; font-size: 18px; font-weight: bold;
-            padding: 14px 12px; border-radius: 18px; transition: transform 0.05s;
-            position: relative; touch-action: manipulation;
+            display: block; text-decoration: none; color: white; font-size: 17px; font-weight: bold;
+            padding: 12px 10px; border-radius: 16px; transition: transform 0.05s;
+            position: relative; touch-action: manipulation; text-align: center;
         }
-        .menu-btn:active { transform: translateY(4px); }
+        .menu-btn:active { transform: translateY(3px); }
 
+        /* 🎨 カラーデザイン */
         .btn-flash { background-color: #ff9f43; border-bottom: 5px solid #e67e22; }
         .btn-tashi { background-color: #ff6b6b; border-bottom: 5px solid #ee5253; }
         .btn-hiki { background-color: #54a0ff; border-bottom: 5px solid #2e86de; }
@@ -43,12 +64,13 @@
         .btn-tenbin { background-color: #e11d48; border-bottom: 5px solid #be123c; }
         .btn-tokei { background-color: #10b981; border-bottom: 5px solid #047857; }
         .btn-okaimono { background-color: #eab308; border-bottom: 5px solid #ca8a04; }
+        .btn-regi { background-color: #f43f5e; border-bottom: 5px solid #be123c; }
         .btn-zukei { background-color: #a855f7; border-bottom: 5px solid #7e22ce; }
-        .btn-ladder { background-color: #f59e0b; border-bottom: 5px solid #b45309; }
+        .btn-ladder { background-color: #0284c7; border-bottom: 5px solid #0369a1; }
 
         .btn-desc {
-            display: inline-block; font-size: 12px; font-weight: normal; margin-top: 4px;
-            background: rgba(0, 0, 0, 0.15); padding: 3px 8px; border-radius: 8px;
+            display: inline-block; font-size: 11px; font-weight: normal; margin-top: 3px;
+            background: rgba(0, 0, 0, 0.15); padding: 2px 6px; border-radius: 6px;
         }
     </style>
 </head>
@@ -56,32 +78,80 @@
 
 <div class="menu-container">
     <h1>🎮 さんすうパーク</h1>
-    <p class="subtitle">あそびたい ゲームを えらんでね！</p>
+    <p class="subtitle">ジャンルを えらんで あそぼう！</p>
 
-    <div class="menu-grid">
+    <!-- 🗂️ カテゴリ選択タブ -->
+    <div class="category-tabs">
+        <button class="tab-btn active" onclick="switchCategory('calc')">🧮 けいさん</button>
+        <button class="tab-btn" onclick="switchCategory('puzzle')">🧩 パズル・ずけい</button>
+        <button class="tab-btn" onclick="switchCategory('life')">🏪 せいかつ・体感</button>
+    </div>
+
+    <!-- 1️⃣ 計算特化グループ -->
+    <div class="category-content active" id="cat-calc">
         <a href="flash.html" class="menu-btn btn-flash">🔢 フラッシュあんざん<br><span class="btn-desc">すうじが チカチカ でるよ！</span></a>
         <a href="tashizan.html" class="menu-btn btn-tashi">➕ たしざんタイムアタック<br><span class="btn-desc">10問スピード勝負！</span></a>
         <a href="hikizan.html" class="menu-btn btn-hiki">➖ ひきざんタイムアタック<br><span class="btn-desc">くり下がりも練習できる！</span></a>
+        <a href="mushikui.html" class="menu-btn btn-mushikui">🧩 あなうめ たしざん<br><span class="btn-desc">「3 + □ = 10」の□をあてよう！</span></a>
         <a href="keisan2.html" class="menu-btn btn-keisan2">⏱️ 四則けいさんアタック<br><span class="btn-desc">＋ － × ÷ コンボをつなげ！</span></a>
-        <a href="bunshou.html" class="menu-btn btn-bunshou">📚 さんすう 文章題<br><span class="btn-desc">おはなしを よんで こたえよう！</span></a>
+        <a href="baisu.html" class="menu-btn btn-baisu">🎯 九九のばいすう タップ！<br><span class="btn-desc">2〜9の段を選んで倍数をさがそう！</span></a>
         <a href="warizanz.html" class="menu-btn btn-wari">➗ わりざん筆算マスター<br><span class="btn-desc">ひっ算の解き方をステップ練習</span></a>
-        <a href="gumnan.html" class="menu-btn btn-gunman">🤠 計算ガンマン<br><span class="btn-desc">正しい答えを早撃ちシューティング！</span></a>
+        <a href="bunshou.html" class="menu-btn btn-bunshou">📚 さんすう 文章題<br><span class="btn-desc">おはなしを よんで こたえよう！</span></a>
+<a href="ghost.html" class="menu-btn" style="background-color: #6366f1; border-bottom: 5px solid #4338ca;">
+    👻 ゴースト・アディショナル
+    <br><span class="btn-desc">消える数字を覚えて足し算！</span>
+	</a>
+
+	<a href="dokkiri.html" class="menu-btn" style="background-color: #2563eb; border-bottom: 5px solid #1d4ed8;">
+	    ⚡ ドッキリ加算
+	    <br><span class="btn-desc">文字の大きさに騙されるな！</span>
+	</a>
+
+	<a href="dot.html" class="menu-btn" style="background-color: #10b981; border-bottom: 5px solid #047857;">
+	    🎯 ドット・インパクト
+	    <br><span class="btn-desc">一瞬の丸の数を直感で足し算！</span>
+	</a>
+    </div>
+
+    <!-- 2️⃣ パズル・思考力・図形グループ -->
+    <div class="category-content" id="cat-puzzle">
+        <a href="tenbin.html" class="menu-btn btn-tenbin">⚖️ てんびんパズル<br><span class="btn-desc">左右がつりあう数字をえらぼう！</span></a>
+        <a href="zukei.html" class="menu-btn btn-zukei">🔷 なかまはずれ図形<br><span class="btn-desc">ちがう形の図形を見つけよう！</span></a>
         <a href="number-chain.html" class="menu-btn btn-chain">🔗 ナンバー・チェイン<br><span class="btn-desc">なぞって目標の数をつくるパズル</span></a>
         <a href="neongame.html" class="menu-btn btn-nazori">✏️ なぞりゲーム<br><span class="btn-desc">光るルートをおぼえてなぞろう</span></a>
-        <a href="baisu.html" class="menu-btn btn-baisu">🎯 九九のばいすう タップ！<br><span class="btn-desc">2〜9の段を選んで倍数をさがそう！</span></a>
-        <a href="mushikui.html" class="menu-btn btn-mushikui">🧩 あなうめ たしざん<br><span class="btn-desc">「3 + □ = 10」の□をあてよう！</span></a>
-        <a href="tenbin.html" class="menu-btn btn-tenbin">⚖️ てんびんパズル<br><span class="btn-desc">左右がつりあう数字をえらぼう！</span></a>
+        <a href="gumnan.html" class="menu-btn btn-gunman">🤠 計算ガンマン<br><span class="btn-desc">正しい答えを早撃ちシューティング！</span></a>
+    </div>
+
+    <!-- 3️⃣ 生活・体感アクション・運動グループ -->
+    <div class="category-content" id="cat-life">
         <a href="tokei.html" class="menu-btn btn-tokei">⏰ とけいよみアタック<br><span class="btn-desc">なんじなんふん？針をよみとろう！</span></a>
         <a href="okaimono.html" class="menu-btn btn-okaimono">🪙 お買い物ピッタリ<br><span class="btn-desc">コインをえらんでぴったりはらおう！</span></a>
-	<a href="regi.html" class="menu-btn" style="background-color: #f43f5e; border-bottom: 5px solid #be123c;">
-	    🏪 レジ打ちマスター！
-	    <br><span class="btn-desc">「おつりはこれだけ！」正確に渡そう！</span>
-	</a>
-        <a href="zukei.html" class="menu-btn btn-zukei">🔷 なかまはずれ図形<br><span class="btn-desc">ちがう形の図形を見つけよう！</span></a>
-        <a href="ladder.html" class="menu-btn btn-ladder">🏃‍♂️ さんすうラダー<br><span class="btn-desc">偶数イン・奇数アウトで連打！</span></a>
-
+        <a href="regi.html" class="menu-btn btn-regi">🏪 レジ打ちマスター！<br><span class="btn-desc">「おつりはこれだけ！」正確に渡そう！</span></a>
+        <a href="ladder-real.html" class="menu-btn btn-ladder">🏃‍♂️ 本格ラダーダッシュ！<br><span class="btn-desc">「左中・右中・左外・右外」で駆け抜けろ！</span></a>
     </div>
+
 </div>
+
+<script>
+    function switchCategory(catName) {
+        // 全タブのactive解除
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        // 全コンテンツの非表示
+        document.querySelectorAll('.category-content').forEach(content => content.classList.remove('active'));
+
+        // 選択されたタブ・コンテンツのアクティブ化
+        if (catName === 'calc') {
+            event.currentTarget.classList.add('active');
+            document.getElementById('cat-calc').classList.add('active');
+        } else if (catName === 'puzzle') {
+            event.currentTarget.classList.add('active');
+            document.getElementById('cat-puzzle').classList.add('active');
+        } else if (catName === 'life') {
+            event.currentTarget.classList.add('active');
+            document.getElementById('cat-life').classList.add('active');
+        }
+    }
+</script>
 
 </body>
 </html>

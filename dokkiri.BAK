@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>超・ドッキリ加算 - さんすうパーク</title>
+    <link rel="stylesheet" href="css/game-common.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box;
+            font-family: sans-serif; user-select: none; color: white; -webkit-user-select: none;
+        }
+        .game-container {
+            background-color: #1e293b; border-radius: 24px; border: 6px solid #3b82f6;
+            box-shadow: 0 10px 0 #1d4ed8, 0 15px 25px rgba(0,0,0,0.5);
+            padding: 16px; width: 100%; max-width: 420px; text-align: center; box-sizing: border-box;
+            position: relative; overflow: hidden;
+        }
+        h1 { color: #60a5fa; font-size: 20px; margin: 0 0 8px 0; }
+        
+        .info-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: #0f172a; border: 2px solid #334155; border-radius: 12px;
+            padding: 6px 12px; margin-bottom: 10px; font-weight: bold; font-size: 15px; color: #93c5fd;
+        }
+
+        /* コンボ表示 */
+        .combo-badge {
+            font-size: 14px; font-weight: bold; color: #facc15; text-shadow: 0 0 8px #facc15;
+            min-height: 20px; visibility: hidden;
+        }
+        .combo-badge.show { visibility: visible; animation: pop 0.2s ease-out; }
+
+        @keyframes pop {
+            0% { transform: scale(0.5); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* 指示カード（モード別デザイン） */
+        .rule-mode-card {
+            font-size: 19px; font-weight: bold; padding: 12px; border-radius: 16px;
+            margin-bottom: 12px; transition: all 0.15s ease-out; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .mode-add { background: #1e3a8a; border: 4px solid #3b82f6; color: #93c5fd; }
+        .mode-big-font { background: #881337; border: 4px solid #f43f5e; color: #fecdd3; animation: pulseRed 0.4s infinite alternate; }
+        .mode-big-val  { background: #713f12; border: 4px solid #eab308; color: #fef08a; animation: pulseYellow 0.4s infinite alternate; }
+
+        @keyframes pulseRed {
+            0% { border-color: #f43f5e; box-shadow: 0 0 10px #f43f5e; }
+            100% { border-color: #fb7185; box-shadow: 0 0 20px #f43f5e; }
+        }
+        @keyframes pulseYellow {
+            0% { border-color: #eab308; box-shadow: 0 0 10px #eab308; }
+            100% { border-color: #fde047; box-shadow: 0 0 20px #eab308; }
+        }
+
+        /* 数字ステージ */
+        .number-stage {
+            height: 130px; background: #020617; border-radius: 18px; border: 3px solid #334155;
+            margin-bottom: 14px; display: flex; justify-content: space-around; align-items: center;
+            padding: 0 10px; gap: 10px;
+        }
+
+        /* 数字ボタン（単体タップ可能） */
+        .num-tap-btn {
+            flex: 1; height: 100%; display: flex; justify-content: center; align-items: center;
+            background: transparent; border: none; color: white; font-weight: bold; cursor: pointer;
+            border-radius: 12px; transition: transform 0.05s, background 0.1s;
+        }
+        .num-tap-btn:active { background: rgba(255,255,255,0.1); transform: scale(0.95); }
+
+        /* 4択選択肢 */
+        .choices-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+        .choice-btn {
+            background: #2563eb; color: white; border: none; border-bottom: 5px solid #1d4ed8;
+            border-radius: 14px; font-size: 26px; font-weight: bold; padding: 14px 0; cursor: pointer;
+            touch-action: manipulation; transition: transform 0.05s;
+        }
+        .choice-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85);
+            display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px;
+        }
+        .modal {
+            background: #1e293b; border-radius: 20px; padding: 20px; max-width: 360px; width: 100%;
+            border: 5px solid #3b82f6; text-align: center; color: white;
+        }
+        .start-btn, .back-btn {
+            display: inline-block; width: 100%; padding: 12px 0; font-size: 16px; font-weight: bold;
+            color: white; background-color: #2563eb; border: none; border-bottom: 5px solid #1d4ed8;
+            border-radius: 14px; cursor: pointer; text-decoration: none; margin-top: 8px; box-sizing: border-box;
+        }
+        .back-btn { background-color: #475569; border-bottom-color: #334155; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="game-container" id="game-card">
+    <h1>⚡ 超・ドッキリ加算</h1>
+    <div class="info-bar">
+        <span>のこり: <span id="q-num" style="color:#f43f5e; font-size:18px;">12</span> 問</span>
+        <span>タイム: <span id="timer" style="color:#60a5fa; font-size:18px;">0.0</span> 秒</span>
+    </div>
+
+    <div class="combo-badge" id="combo-display">🔥 3 COMBO!</div>
+
+    <!-- モード指示 -->
+    <div class="rule-mode-card mode-add" id="mode-card">
+        🔵 たしざんの こたえは？
+    </div>
+
+    <!-- 数字表示エリア -->
+    <div class="number-stage" id="stage">
+        <button class="num-tap-btn" id="num-btn-1" onclick="handleDirectNumTap(1)"></button>
+        <button class="num-tap-btn" id="num-btn-2" onclick="handleDirectNumTap(2)"></button>
+    </div>
+
+    <!-- 4択ボタン -->
+    <div class="choices-grid" id="choices"></div>
+
+    <a href="index.html" class="back-btn" style="padding:8px 0; font-size:14px;">🏠 メニューにもどる</a>
+</div>
+
+<!-- ルール説明画面 -->
+<div id="start-modal" class="overlay">
+    <div class="modal">
+        <h2 style="color:#60a5fa; margin-top:0;">ルール（超パニック！）</h2>
+        <p style="text-align:left; font-size:14px; color:#cbd5e1; line-height:1.7;">
+            画面の指示にすばやく対応せよ！<br><br>
+            <b>🔵 青指示:</b> たしざんの答え（4択から選ぶ）<br>
+            <b>🔴 赤指示:</b> 「文字の見た目が大きい」数字を直接タップ！<br>
+            <b>🟡 黄指示:</b> 「数の大きさ（値）が大きい」数字を直接タップ！
+        </p>
+        <button class="start-btn" onclick="startGame()">パニックスタート！</button>
+    </div>
+</div>
+
+<!-- リザルト画面 -->
+<div id="result-modal" class="overlay hidden">
+    <div class="modal">
+        <h2 style="color:#60a5fa; margin-top:0; font-size:26px;">🎉 パニッククリア！！</h2>
+        <p style="font-size:18px;">きろく: <b id="final-time" style="color:#60a5fa;"></b> 秒</p>
+        <p style="font-size:15px; color:#facc15;" id="max-combo-display">さいこうコンボ: 0</p>
+        <button class="start-btn" onclick="startGame()">もういちど あそぶ</button>
+        <a href="index.html" class="back-btn">メニューにもどる</a>
+    </div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type, pitchMultiplier = 1.0) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'ok') {
+            osc.frequency.setValueAtTime(523 * pitchMultiplier, now);
+            osc.frequency.exponentialRampToValueAtTime(1046 * pitchMultiplier, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'ng') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(130, now);
+            gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'clear') {
+            osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1);
+            osc.frequency.setValueAtTime(783, now + 0.2); osc.frequency.setValueAtTime(1046, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        }
+    }
+
+    let remQuestions = 12, targetAns = 0, currentMode = 'add'; // 'add', 'bigFont', 'bigVal'
+    let val1 = 0, val2 = 0;
+    let combo = 0, maxCombo = 0;
+    let startTime = 0, timerInterval = null;
+
+    function startGame() {
+        document.getElementById('start-modal').classList.add('hidden');
+        document.getElementById('result-modal').classList.add('hidden');
+        remQuestions = 12;
+        combo = 0;
+        maxCombo = 0;
+        document.getElementById('q-num').textContent = remQuestions;
+        updateComboDisplay();
+        
+        startTime = Date.now();
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            document.getElementById('timer').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+        }, 100);
+
+        nextQuestion();
+    }
+
+    function updateComboDisplay() {
+        const badge = document.getElementById('combo-display');
+        if (combo >= 2) {
+            badge.textContent = `🔥 ${combo} COMBO!`;
+            badge.classList.add('show');
+        } else {
+            badge.classList.remove('show');
+        }
+    }
+
+    function nextQuestion() {
+        if (remQuestions <= 0) {
+            clearInterval(timerInterval); playSound('clear');
+            document.getElementById('final-time').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('max-combo-display').textContent = `さいこうコンボ: ${maxCombo} 回!`;
+            document.getElementById('result-modal').classList.remove('hidden');
+            return;
+        }
+
+        // モード決定: たしざん 50%, フォント大 25%, 数値大 25%
+        const rand = Math.random();
+        if (rand < 0.5) currentMode = 'add';
+        else if (rand < 0.75) currentMode = 'bigFont';
+        else currentMode = 'bigVal';
+
+        const modeCard = document.getElementById('mode-card');
+        if (currentMode === 'add') {
+            modeCard.className = 'rule-mode-card mode-add';
+            modeCard.textContent = '🔵 たしざんの こたえは？';
+        } else if (currentMode === 'bigFont') {
+            modeCard.className = 'rule-mode-card mode-big-font';
+            modeCard.textContent = '🔴 「文字が大きい」のは どっち！？';
+        } else {
+            modeCard.className = 'rule-mode-card mode-big-val';
+            modeCard.textContent = '🟡 「すうじが大きい」のは どっち！？';
+        }
+
+        // 数字（値）の決定 (同じ数字は出さない)
+        val1 = Math.floor(Math.random() * 8) + 1;
+        val2 = Math.floor(Math.random() * 8) + 1;
+        while (val1 === val2) val2 = Math.floor(Math.random() * 8) + 1;
+
+        // フォントサイズの決定
+        const bigFirst = Math.random() < 0.5;
+        const size1 = bigFirst ? '60px' : '30px';
+        const size2 = bigFirst ? '30px' : '60px';
+
+        const btn1 = document.getElementById('num-btn-1');
+        const btn2 = document.getElementById('num-btn-2');
+        btn1.style.fontSize = size1; btn1.textContent = val1;
+        btn2.style.fontSize = size2; btn2.textContent = val2;
+
+        // 正解のセット
+        if (currentMode === 'add') {
+            targetAns = val1 + val2;
+        } else if (currentMode === 'bigFont') {
+            targetAns = bigFirst ? val1 : val2;
+        } else { // bigVal
+            targetAns = (val1 > val2) ? val1 : val2;
+        }
+
+        // 4択ボタンの表示設定（たしざんモード時のみ有効化）
+        const choicesDiv = document.getElementById('choices');
+        choicesDiv.innerHTML = '';
+
+        if (currentMode === 'add') {
+            const choices = [targetAns];
+            while (choices.length < 4) {
+                let dummy = targetAns + (Math.floor(Math.random() * 5) - 2);
+                if (dummy > 0 && !choices.includes(dummy)) choices.push(dummy);
+            }
+            choices.sort(() => Math.random() - 0.5);
+
+            choices.forEach(val => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn'; btn.textContent = val;
+                btn.onclick = () => checkAnswer(val);
+                choicesDiv.appendChild(btn);
+            });
+        } else {
+            // トラップモード時は「画面上の数字を押してね」メッセージ
+            choicesDiv.innerHTML = `<div style="grid-column: span 2; font-size: 16px; font-weight: bold; color: #fde047; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 12px;">👆 うえの すうじを ダイレクトに タップ！</div>`;
+        }
+    }
+
+    // 画面上の数字を直接押した時
+    function handleDirectNumTap(btnIndex) {
+        if (currentMode === 'add') return; // たしざん時は下選択肢のみ
+
+        const selectedVal = (btnIndex === 1) ? val1 : val2;
+        checkAnswer(selectedVal);
+    }
+
+    function checkAnswer(val) {
+        if (val === targetAns) {
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+            const pitch = 1.0 + Math.min(combo * 0.05, 0.5); // コンボで音が上がる
+            playSound('ok', pitch);
+            
+            remQuestions--;
+            document.getElementById('q-num').textContent = remQuestions;
+            updateComboDisplay();
+            nextQuestion();
+        } else {
+            combo = 0;
+            playSound('ng');
+            updateComboDisplay();
+            
+            // ミス時の画面揺れ演出
+            const card = document.getElementById('game-card');
+            card.style.transform = 'translateX(-6px)';
+            setTimeout(() => card.style.transform = 'translateX(6px)', 50);
+            setTimeout(() => card.style.transform = 'translateX(0)', 100);
+        }
+    }
+</script>
+</body>
+</html>

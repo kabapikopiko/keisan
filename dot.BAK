@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ドット・インパクト - さんすうパーク</title>
+    <link rel="stylesheet" href="css/game-common.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box;
+            font-family: sans-serif; user-select: none; color: white; -webkit-user-select: none;
+        }
+        .game-container {
+            background-color: #022c22; border-radius: 24px; border: 6px solid #10b981;
+            box-shadow: 0 10px 0 #047857, 0 15px 25px rgba(0,0,0,0.5);
+            padding: 16px; width: 100%; max-width: 420px; text-align: center; box-sizing: border-box;
+        }
+        h1 { color: #34d399; font-size: 20px; margin: 0 0 6px 0; }
+        
+        .info-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: #064e3b; border: 2px solid #059669; border-radius: 12px;
+            padding: 6px 12px; margin-bottom: 8px; font-weight: bold; font-size: 15px; color: #a7f3d0;
+        }
+
+        .combo-badge {
+            font-size: 14px; font-weight: bold; color: #facc15; text-shadow: 0 0 8px #facc15;
+            min-height: 20px; visibility: hidden; margin-bottom: 4px;
+        }
+        .combo-badge.show { visibility: visible; animation: pop 0.2s ease-out; }
+        @keyframes pop { 0% { transform: scale(0.5); } 100% { transform: scale(1.1); } }
+
+        .stage-box {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            height: 150px; margin-bottom: 14px;
+        }
+        .dot-card {
+            background: #065f46; border: 3px solid #10b981; border-radius: 16px;
+            position: relative; overflow: hidden; box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
+            display: grid; padding: 6px; box-sizing: border-box;
+        }
+
+        .grid-3x3 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
+        .grid-4x4 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+        
+        .grid-cell {
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .dot-element {
+            width: 24px; height: 24px;
+            background: radial-gradient(circle at 35% 35%, #fffde7 0%, #facc15 60%, #ca8a04 100%);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 10px rgba(250, 204, 21, 0.6);
+            animation: ballPop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes ballPop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .choices-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+        .choice-btn {
+            background: #059669; color: white; border: none; border-bottom: 5px solid #047857;
+            border-radius: 14px; font-size: 26px; font-weight: bold; padding: 14px 0; cursor: pointer;
+            touch-action: manipulation; transition: transform 0.05s;
+        }
+        .choice-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85);
+            display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px;
+        }
+        .modal {
+            background: #064e3b; border-radius: 20px; padding: 20px; max-width: 360px; width: 100%;
+            border: 5px solid #10b981; text-align: center; color: white;
+        }
+
+        .level-btn {
+            display: block; width: 100%; padding: 12px 0; font-size: 16px; font-weight: bold;
+            color: white; border: none; border-radius: 14px; cursor: pointer; margin-bottom: 8px; box-sizing: border-box;
+        }
+        .btn-easy { background-color: #22c55e; border-bottom: 4px solid #15803d; }
+        .btn-mid  { background-color: #3b82f6; border-bottom: 4px solid #1d4ed8; }
+        .btn-hard { background-color: #f43f5e; border-bottom: 4px solid #be123c; }
+
+        .back-btn {
+            display: inline-block; width: 100%; padding: 10px 0; font-size: 14px; font-weight: bold;
+            color: white; background-color: #475569; border: none; border-bottom: 4px solid #334155;
+            border-radius: 12px; cursor: pointer; text-decoration: none; box-sizing: border-box; margin-top: 4px;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>🎯 ドット・インパクト</h1>
+    <div class="info-bar">
+        <span>のこり: <span id="q-num" style="color:#f43f5e; font-size:18px;">10</span> 問</span>
+        <span>タイム: <span id="timer" style="color:#34d399; font-size:18px;">0.0</span> 秒</span>
+    </div>
+
+    <div class="combo-badge" id="combo-display">🔥 3 COMBO!</div>
+
+    <div class="stage-box">
+        <div class="dot-card grid-3x3" id="card-left"></div>
+        <div class="dot-card grid-3x3" id="card-right"></div>
+    </div>
+
+    <div class="choices-grid" id="choices"></div>
+
+    <button class="back-btn" onclick="showSelectModal()">🔄 むずかしさを えらびなおす</button>
+</div>
+
+<!-- コース選択画面 -->
+<div id="select-modal" class="overlay">
+    <div class="modal">
+        <h2 style="color:#34d399; margin-top:0;">コースをえらぼう！</h2>
+        <p style="font-size:13px; color:#a7f3d0; margin-bottom:14px;">一瞬だけ光るボールの数をあてよう！</p>
+
+        <button class="level-btn btn-easy" onclick="selectLevel('easy')">🟢 しょきゅう (ごうけい 5まで)</button>
+        <button class="level-btn btn-mid"  onclick="selectLevel('mid')">🔵 ちゅうきゅう (ごうけい 10まで)</button>
+        <button class="level-btn btn-hard" onclick="selectLevel('hard')">🔴 じょうきゅう (ごうけい 18まで)</button>
+
+        <a href="index.html" class="back-btn">🏠 メニューにもどる</a>
+    </div>
+</div>
+
+<!-- クリア画面 -->
+<div id="result-modal" class="overlay hidden">
+    <div class="modal">
+        <h2 style="color:#34d399; margin-top:0; font-size:26px;">🎉 完全攻略！！</h2>
+        <p style="font-size:18px;">きろく: <b id="final-time" style="color:#34d399;"></b> 秒</p>
+        <p style="font-size:15px; color:#facc15;" id="max-combo-display">さいこうコンボ: 0</p>
+        <button class="level-btn btn-mid" onclick="startGame()">もういちど あそぶ</button>
+        <button class="level-btn btn-easy" onclick="showSelectModal()">ほかのコース</button>
+        <a href="index.html" class="back-btn">メニューにもどる</a>
+    </div>
+</div>
+
+<script>
+    let audioCtx = null;
+    function playSound(type, pitchMultiplier = 1.0) {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'ok') {
+                osc.frequency.setValueAtTime(523 * pitchMultiplier, now);
+                osc.frequency.exponentialRampToValueAtTime(1046 * pitchMultiplier, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            } else if (type === 'ng') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+            } else if (type === 'clear') {
+                osc.frequency.setValueAtTime(523, now);
+                osc.frequency.setValueAtTime(659, now + 0.1);
+                osc.frequency.setValueAtTime(783, now + 0.2);
+                osc.frequency.setValueAtTime(1046, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
+        } catch(e) {
+            console.log(e);
+        }
+    }
+
+    let currentLevel = 'easy';
+    let remQuestions = 10;
+    let targetSum = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let startTime = 0;
+    let timerInterval = null;
+    let hideTimerId = null;
+    let isProcessingAnswer = false; // 回答ロックフラグ
+
+    function showSelectModal() {
+        if (timerInterval) clearInterval(timerInterval);
+        if (hideTimerId) clearTimeout(hideTimerId);
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('select-modal').classList.remove('hidden');
+    }
+
+    function selectLevel(lvl) {
+        currentLevel = lvl;
+        startGame();
+    }
+
+    function startGame() {
+        if (timerInterval) clearInterval(timerInterval);
+        if (hideTimerId) clearTimeout(hideTimerId);
+
+        document.getElementById('select-modal').classList.add('hidden');
+        document.getElementById('result-modal').classList.add('hidden');
+
+        remQuestions = 10;
+        combo = 0;
+        maxCombo = 0;
+        isProcessingAnswer = false;
+
+        document.getElementById('q-num').textContent = remQuestions;
+        updateComboDisplay();
+
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+            document.getElementById('timer').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+        }, 100);
+
+        nextQuestion();
+    }
+
+    function updateComboDisplay() {
+        const badge = document.getElementById('combo-display');
+        if (combo >= 2) {
+            badge.textContent = `🔥 ${combo} COMBO!`;
+            badge.classList.add('show');
+        } else {
+            badge.classList.remove('show');
+        }
+    }
+
+    function renderGridDots(cardId, count, gridSize) {
+        const card = document.getElementById(cardId);
+        card.innerHTML = '';
+        card.className = `dot-card grid-${gridSize}x${gridSize}`;
+
+        const totalCells = gridSize * gridSize;
+        const cells = [];
+        for (let i = 0; i < totalCells; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            card.appendChild(cell);
+            cells.push(cell);
+        }
+
+        const chosenIndices = [];
+        while (chosenIndices.length < count) {
+            const r = Math.floor(Math.random() * totalCells);
+            if (!chosenIndices.includes(r)) chosenIndices.push(r);
+        }
+
+        chosenIndices.forEach(idx => {
+            const dot = document.createElement('div');
+            dot.className = 'dot-element';
+            if (gridSize === 4) {
+                dot.style.width = '18px';
+                dot.style.height = '18px';
+            }
+            cells[idx].appendChild(dot);
+        });
+    }
+
+    function nextQuestion() {
+        if (hideTimerId) clearTimeout(hideTimerId);
+        
+        // ★次回問題切り替え時に必ず回答ロックを解く★
+        isProcessingAnswer = false;
+
+        if (remQuestions <= 0) {
+            if (timerInterval) clearInterval(timerInterval);
+            playSound('clear');
+            document.getElementById('final-time').textContent = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('max-combo-display').textContent = `さいこうコンボ: ${maxCombo} 回!`;
+            document.getElementById('result-modal').classList.remove('hidden');
+            return;
+        }
+
+        let countL = 1, countR = 1, displayTime = 1200, gridSize = 3;
+
+        if (currentLevel === 'easy') {
+            countL = Math.floor(Math.random() * 3) + 1;
+            countR = Math.floor(Math.random() * 2) + 1;
+            displayTime = 1200;
+            gridSize = 3;
+        } else if (currentLevel === 'mid') {
+            countL = Math.floor(Math.random() * 5) + 1;
+            countR = Math.floor(Math.random() * 5) + 1;
+            displayTime = 900;
+            gridSize = 3;
+        } else {
+            countL = Math.floor(Math.random() * 8) + 1;
+            countR = Math.floor(Math.random() * 8) + 1;
+            displayTime = 600;
+            gridSize = 4;
+        }
+
+        targetSum = countL + countR;
+
+        renderGridDots('card-left', countL, gridSize);
+        renderGridDots('card-right', countR, gridSize);
+
+        hideTimerId = setTimeout(() => {
+            document.getElementById('card-left').innerHTML = '';
+            document.getElementById('card-right').innerHTML = '';
+        }, displayTime);
+
+        const choices = [targetSum];
+        while (choices.length < 4) {
+            let dummy = targetSum + (Math.floor(Math.random() * 5) - 2);
+            if (dummy > 1 && !choices.includes(dummy)) choices.push(dummy);
+        }
+        choices.sort(() => Math.random() - 0.5);
+
+        const choicesDiv = document.getElementById('choices');
+        choicesDiv.innerHTML = '';
+        choices.forEach(val => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.textContent = val;
+            btn.onclick = () => {
+                // ロック中なら処理を弾く
+                if (isProcessingAnswer) return;
+                
+                if (val === targetSum) {
+                    isProcessingAnswer = true; // 連打防ぎロック
+                    combo++;
+                    if (combo > maxCombo) maxCombo = combo;
+                    const pitch = 1.0 + Math.min(combo * 0.05, 0.5);
+                    playSound('ok', pitch);
+
+                    remQuestions--;
+                    document.getElementById('q-num').textContent = remQuestions;
+                    updateComboDisplay();
+                    
+                    // 短い余韻を挟んで次問題へ（ロックは nextQuestion 内で解除される）
+                    setTimeout(nextQuestion, 150);
+                } else {
+                    combo = 0;
+                    playSound('ng');
+                    updateComboDisplay();
+                }
+            };
+            choicesDiv.appendChild(btn);
+        });
+    }
+</script>
+</body>
+</html>
