@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人向け国債 利息計算シミュレーター</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* スライダーのカスタマイズ */
+        input[type=range] {
+            accent-color: #2563eb;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- ヘッダー -->
+        <header class="text-center space-y-2">
+            <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold mb-1">
+                <i data-lucide="calculator" class="w-4 h-4"></i>
+                完全元本保証・利息シミュレーション
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">個人向け国債 利息計算シミュレーター</h1>
+            <p class="text-sm text-slate-500">2,000万円運用や固定5年・3年・変動10年の利息と手取り額をカンタン試算</p>
+        </header>
+
+        <!-- メインコンテンツカード -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-8">
+            
+            <!-- 1. 投資金額の設定 -->
+            <div class="space-y-4">
+                <div class="flex justify-between items-center flex-wrap gap-2">
+                    <label for="amountInput" class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="japanese-yen" class="w-5 h-5 text-blue-600"></i>
+                        購入金額（投資額）
+                    </label>
+                    <div class="flex items-center gap-1">
+                        <input type="number" id="amountInput" value="2000" min="1" max="10000" step="1" 
+                               class="w-32 text-right font-bold text-xl border border-slate-300 rounded-lg px-3 py-1 text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span class="font-bold text-slate-700">万円</span>
+                    </div>
+                </div>
+
+                <!-- スライダー -->
+                <input type="range" id="amountSlider" min="10" max="10000" step="10" value="2000" 
+                       class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                
+                <!-- プリセットボタン -->
+                <div class="flex flex-wrap gap-2 justify-end text-xs">
+                    <button onclick="setAmount(100)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-md transition">100万円</button>
+                    <button onclick="setAmount(500)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-md transition">500万円</button>
+                    <button onclick="setAmount(1000)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-md transition">1,000万円</button>
+                    <button onclick="setAmount(2000)" class="bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-md transition">2,000万円</button>
+                    <button onclick="setAmount(5000)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-md transition">5,000万円</button>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- 2. 国債タイプの選択 -->
+            <div class="space-y-4">
+                <label class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="layers" class="w-5 h-5 text-blue-600"></i>
+                    国債のタイプを選択
+                </label>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- 固定5年 -->
+                    <label class="relative flex flex-col p-4 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 transition has-[:checked]:bg-blue-50/50 has-[:checked]:border-blue-600">
+                        <input type="radio" name="bondType" value="fixed5" checked class="sr-only" onchange="updateSim()">
+                        <span class="font-bold text-slate-900 text-base mb-1">固定5年</span>
+                        <span class="text-xs text-slate-500 mb-2">今すぐ高金利を確定</span>
+                        <span class="text-lg font-bold text-blue-600 mt-auto">年 2.39 %</span>
+                        <span class="inline-block mt-2 text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded w-max">オススメ！</span>
+                    </label>
+
+                    <!-- 固定3年 -->
+                    <label class="relative flex flex-col p-4 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 transition has-[:checked]:bg-blue-50/50 has-[:checked]:border-blue-600">
+                        <input type="radio" name="bondType" value="fixed3" class="sr-only" onchange="updateSim()">
+                        <span class="font-bold text-slate-900 text-base mb-1">固定3年</span>
+                        <span class="text-xs text-slate-500 mb-2">短いサイクルで安心</span>
+                        <span class="text-lg font-bold text-blue-600 mt-auto">年 2.07 %</span>
+                        <span class="inline-block mt-2 text-[10px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded w-max">高齢の方に好適</span>
+                    </label>
+
+                    <!-- 変動10年 -->
+                    <label class="relative flex flex-col p-4 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 transition has-[:checked]:bg-blue-50/50 has-[:checked]:border-blue-600">
+                        <input type="radio" name="bondType" value="var10" class="sr-only" onchange="updateSim()">
+                        <span class="font-bold text-slate-900 text-base mb-1">変動10年</span>
+                        <span class="text-xs text-slate-500 mb-2">半年ごとに金利見直し</span>
+                        <span class="text-lg font-bold text-blue-600 mt-auto" id="var10Label">年 2.05 %</span>
+                        <span class="inline-block mt-2 text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded w-max">金利上昇に自動追従</span>
+                    </label>
+                </div>
+
+                <!-- 変動10年専用：基準金利シミュレーション領域 -->
+                <div id="var10Controls" class="hidden bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-3 mt-3">
+                    <div class="flex justify-between items-center flex-wrap gap-2">
+                        <span class="text-sm font-bold text-blue-900 flex items-center gap-1">
+                            <i data-lucide="sliders" class="w-4 h-4 text-blue-600"></i>
+                            将来の「基準金利（長期金利）」を動かす試算
+                        </span>
+                        <span class="text-sm font-bold text-blue-700">
+                            基準金利: <span id="baseRateVal" class="text-base text-blue-900 font-extrabold">3.10</span>%
+                        </span>
+                    </div>
+                    <input type="range" id="baseRateSlider" min="0.1" max="5.0" step="0.05" value="3.10" 
+                           class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer" oninput="updateSim()">
+                    <div class="flex justify-between text-[11px] text-slate-500">
+                        <span>0.10% (超低金利)</span>
+                        <span>3.10% (現在)</span>
+                        <span>3.50% (現実的上限)</span>
+                        <span>5.00% (高金利)</span>
+                    </div>
+                    <div class="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-blue-100">
+                        ※適用金利 ＝ 基準金利 × 0.66 （下限 0.05% 保障）<br>
+                        計算結果の適用金利：<span id="calculatedRate" class="font-bold text-blue-700">2.05%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. シミュレーション結果 -->
+            <div class="space-y-6 pt-2">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
+                    <i data-lucide="pie-chart" class="w-5 h-5 text-blue-600"></i>
+                    シミュレーション結果
+                </h2>
+
+                <!-- メイン数値カード（合計手取り） -->
+                <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full pointer-events-none"></div>
+                    <div class="space-y-1 relative z-10">
+                        <div class="text-xs sm:text-sm text-blue-200 font-medium">
+                            <span id="termLabel" class="font-bold">5年間</span>の「手取り合計利息」（税引後 約20.315%引）
+                        </div>
+                        <div class="text-3xl sm:text-5xl font-extrabold tracking-tight text-amber-300 py-1">
+                            <span id="totalNetInterest">0</span> <span class="text-xl sm:text-2xl font-bold text-white">円</span>
+                        </div>
+                        <div class="text-xs text-blue-200">
+                            （税引前合計：<span id="totalGrossInterest" class="font-semibold text-white">0</span> 円）
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 周期ごとの受取利息内訳 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- 年間受取額 -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
+                        <span class="text-xs font-semibold text-slate-500">年間受取額</span>
+                        <div class="text-xl font-bold text-slate-900">
+                            手取り <span id="annualNet" class="text-blue-600">0</span> 円/年
+                        </div>
+                        <div class="text-xs text-slate-500">
+                            税引前: <span id="annualGross">0</span> 円
+                        </div>
+                    </div>
+
+                    <!-- 半年ごとの受取額（1回あたり） -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
+                        <span class="text-xs font-semibold text-slate-500">半年ごと（年2回の1回あたり）</span>
+                        <div class="text-xl font-bold text-slate-900">
+                            手取り <span id="semiNet" class="text-blue-600">0</span> 円/回
+                        </div>
+                        <div class="text-xs text-slate-500">
+                            税引前: <span id="semiGross">0</span> 円
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 銀行定期預金との比較 -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <span class="font-bold text-emerald-900 flex items-center gap-1.5 text-sm sm:text-base">
+                            <i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i>
+                            メガバンク・定期預金と比較したお得額
+                        </span>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="text-slate-600">比較対象の定期預金:</span>
+                            <select id="bankRateSelect" class="border border-emerald-300 rounded px-2 py-1 bg-white font-semibold text-emerald-800 focus:outline-none" onchange="updateSim()">
+                                <option value="0.30">0.30% (一般的な定期)</option>
+                                <option value="0.50">0.50% (ネット銀行など)</option>
+                                <option value="0.80">0.80% (高金利キャンペーン)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div class="bg-white p-3 rounded-lg border border-emerald-100">
+                            <div class="text-xs text-slate-500">定期預金の手取り合計（同期間）</div>
+                            <div class="text-base font-bold text-slate-700">
+                                <span id="bankNetTotal">0</span> 円
+                            </div>
+                        </div>
+                        <div class="bg-emerald-600 text-white p-3 rounded-lg shadow-sm">
+                            <div class="text-xs text-emerald-100">国債を選ぶことで増える手取り差額</div>
+                            <div class="text-xl font-extrabold text-amber-200">
+                                ＋ <span id="diffNetTotal">0</span> 円 得！
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- 脚注・補足説明 -->
+        <footer class="text-xs text-slate-500 space-y-1.5 px-2">
+            <p>※1 税率は所得税・復興特別所得税および住民税を合わせた 20.315% で試算しています。</p>
+            <p>※2 変動10年の基準金利（10年物国債利回り）による計算は「基準金利 × 0.66（小数点第3位以下切捨て）」として試算しています（下限0.05%）。</p>
+            <p>※3 個人向け国債は発行から1年間は中途換金ができません。1年経過後は国が額面で買い取るため元本割れはありません（直近2回分の各利子相当額がペナルティとして差し引かれます）。</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // DOM要素の取得
+        const amountInput = document.getElementById('amountInput');
+        const amountSlider = document.getElementById('amountSlider');
+        const var10Controls = document.getElementById('var10Controls');
+        const baseRateSlider = document.getElementById('baseRateSlider');
+        const baseRateVal = document.getElementById('baseRateVal');
+        const calculatedRate = document.getElementById('calculatedRate');
+        const var10Label = document.getElementById('var10Label');
+        const bankRateSelect = document.getElementById('bankRateSelect');
+
+        const totalNetInterest = document.getElementById('totalNetInterest');
+        const totalGrossInterest = document.getElementById('totalGrossInterest');
+        const termLabel = document.getElementById('termLabel');
+        const annualNet = document.getElementById('annualNet');
+        const annualGross = document.getElementById('annualGross');
+        const semiNet = document.getElementById('semiNet');
+        const semiGross = document.getElementById('semiGross');
+
+        const bankNetTotal = document.getElementById('bankNetTotal');
+        const diffNetTotal = document.getElementById('diffNetTotal');
+
+        // 税率 (20.315%)
+        const TAX_RATE = 0.20315;
+
+        // 金利データ（初期値）
+        const RATES = {
+            fixed5: { rate: 2.39, term: 5 },
+            fixed3: { rate: 2.07, term: 3 },
+            var10: { rate: 2.05, term: 10 }
+        };
+
+        // 金額スライダーと入力枠の同期
+        amountInput.addEventListener('input', () => {
+            amountSlider.value = amountInput.value;
+            updateSim();
+        });
+
+        amountSlider.addEventListener('input', () => {
+            amountInput.value = amountSlider.value;
+            updateSim();
+        });
+
+        function setAmount(val) {
+            amountInput.value = val;
+            amountSlider.value = val;
+            updateSim();
+        }
+
+        // メイン計算処理
+        function updateSim() {
+            const principal = (parseFloat(amountInput.value) || 0) * 10000; // 円単位に変換
+            const selectedType = document.querySelector('input[name="bondType"]:checked').value;
+            
+            let annualRate = 0;
+            let termYears = RATES[selectedType].term;
+
+            // 変動10年の場合の金利計算
+            if (selectedType === 'var10') {
+                var10Controls.classList.remove('hidden');
+                const baseRate = parseFloat(baseRateSlider.value);
+                baseRateVal.textContent = baseRate.toFixed(2);
+                
+                // 適用金利 ＝ 基準金利 × 0.66 (下限0.05%)
+                let calc = Math.floor((baseRate * 0.66) * 100) / 100; // 小数第3位切捨ての簡易計算
+                if (calc < 0.05) calc = 0.05;
+                
+                annualRate = calc;
+                calculatedRate.textContent = calc.toFixed(2) + '%';
+                var10Label.textContent = '年 ' + calc.toFixed(2) + ' %';
+            } else {
+                var10Controls.classList.add('hidden');
+                annualRate = RATES[selectedType].rate;
+            }
+
+            // 利息計算（1年間）
+            const annualGrossAmt = principal * (annualRate / 100);
+            const annualNetAmt = annualGrossAmt * (1 - TAX_RATE);
+
+            // 利息計算（半年ごと・年2回）
+            const semiGrossAmt = annualGrossAmt / 2;
+            const semiNetAmt = annualNetAmt / 2;
+
+            // 満期までの合計利息
+            const totalGrossAmt = annualGrossAmt * termYears;
+            const totalNetAmt = annualNetAmt * termYears;
+
+            // 比較用：定期預金計算
+            const bankRate = parseFloat(bankRateSelect.value);
+            const bankAnnualGross = principal * (bankRate / 100);
+            const bankAnnualNet = bankAnnualGross * (1 - TAX_RATE);
+            const bankTotalNet = bankAnnualNet * termYears;
+
+            const diffNet = totalNetAmt - bankTotalNet;
+
+            // 画面反映
+            termLabel.textContent = termYears + '年間';
+            totalNetInterest.textContent = Math.round(totalNetAmt).toLocaleString();
+            totalGrossInterest.textContent = Math.round(totalGrossAmt).toLocaleString();
+
+            annualNet.textContent = Math.round(annualNetAmt).toLocaleString();
+            annualGross.textContent = Math.round(annualGrossAmt).toLocaleString();
+
+            semiNet.textContent = Math.round(semiNetAmt).toLocaleString();
+            semiGross.textContent = Math.round(semiGrossAmt).toLocaleString();
+
+            bankNetTotal.textContent = Math.round(bankTotalNet).toLocaleString();
+            diffNetTotal.textContent = Math.round(diffNet).toLocaleString();
+        }
+
+        // 初期化処理
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateSim();
+        });
+    </script>
+</body>
+</html>

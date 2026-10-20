@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Flight: Star Guardian - 超高画質算数シューティング</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0; background-color: #030712; color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden; user-select: none; -webkit-user-select: none;
+            touch-action: none; display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+        #game-view {
+            position: relative; width: 100vw; height: 100vh; max-width: 500px; max-height: 900px;
+            background: #020617; box-shadow: 0 0 50px rgba(56, 189, 248, 0.25);
+            border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+        }
+        canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+        }
+        
+        /* ネオンヘッダー UI */
+        .hud-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; padding: 16px 20px; z-index: 10;
+            display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none;
+        }
+        .hud-glass {
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px;
+            padding: 8px 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+        .q-display {
+            font-size: 26px; font-weight: 900; letter-spacing: 1px;
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
+        }
+        .score-display {
+            font-size: 18px; font-weight: 800; color: #facc15; text-align: right;
+            text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+
+        /* アクション操作オーバーレイ (タッチ＆クリック可能) */
+        .controls-overlay {
+            position: absolute; bottom: 20px; left: 0; width: 100%; padding: 0 20px;
+            z-index: 15; display: flex; justify-content: space-between; align-items: center;
+            pointer-events: none;
+        }
+        .fire-btn {
+            pointer-events: auto; width: 84px; height: 84px; border-radius: 50%;
+            background: radial-gradient(circle, #f43f5e 0%, #be123c 100%);
+            border: 3px solid #fda4af; box-shadow: 0 0 25px rgba(244, 63, 94, 0.8), inset 0 2px 4px rgba(255,255,255,0.4);
+            color: #fff; font-size: 16px; font-weight: 900; display: flex;
+            justify-content: center; align-items: center; cursor: pointer;
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+        .fire-btn:active {
+            transform: scale(0.92); box-shadow: 0 0 10px rgba(244, 63, 94, 0.9);
+        }
+
+        /* 画面共通オーバーレイ (モーダル) */
+        .overlay-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30;
+            background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(16px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; text-align: center;
+        }
+        .game-title {
+            font-size: 32px; font-weight: 900; margin-bottom: 10px;
+            background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.6));
+        }
+        .btn-lvl {
+            width: 100%; max-width: 300px; padding: 16px 20px; margin: 8px 0; border: none;
+            border-radius: 16px; font-size: 18px; font-weight: 800; color: #fff;
+            cursor: pointer; transition: all 0.15s ease-out; box-sizing: border-box;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3); position: relative; overflow: hidden;
+        }
+        .btn-lvl-easy { background: linear-gradient(135deg, #10b981, #059669); border: 1px solid #34d399; }
+        .btn-lvl-mid  { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: 1px solid #60a5fa; }
+        .btn-lvl-hard { background: linear-gradient(135deg, #f43f5e, #be123c); border: 1px solid #fb7185; }
+        .btn-lvl:active { transform: scale(0.96); filter: brightness(1.2); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="game-view">
+    <canvas id="canvas"></canvas>
+
+    <!-- プレイ中 HUD -->
+    <div class="hud-overlay" id="hud">
+        <div class="hud-glass q-display" id="q-text">12 + 8 = ?</div>
+        <div class="hud-glass score-display">
+            SCORE <span id="score" style="font-size:22px; color:#fff;">0</span><br>
+            <span id="combo" style="color:#38bdf8; font-size:13px;">0 COMBO</span>
+        </div>
+    </div>
+
+    <!-- アクションコントローラー (手動射撃ボタン & 操作ガイド) -->
+    <div class="controls-overlay" id="controls">
+        <div style="font-size:12px; color:rgba(255,255,255,0.6); background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:20px; backdrop-filter:blur(4px);">
+            👈 ドラッグで左右移動
+        </div>
+        <div class="fire-btn" id="btn-fire">FIRE</div>
+    </div>
+
+    <!-- タイトル＆コース選択 -->
+    <div class="overlay-screen" id="start-screen">
+        <div class="game-title">MATH FLIGHT<br><span style="font-size:18px; color:#94a3b8;">STAR GUARDIAN</span></div>
+        <p style="font-size:14px; color:#94a3b8; margin-bottom:24px; line-height:1.6;">
+            左右移動で照準をあわせ<br><b style="color:#f43f5e;">【FIREボタン】</b>で手動射撃！<br>正解のターゲットを撃ち落とせ！
+        </p>
+
+        <button class="btn-lvl btn-lvl-easy" onclick="initGame('easy')">🟢 初級 (1桁のたし算)</button>
+        <button class="btn-lvl btn-lvl-mid" onclick="initGame('mid')">🔵 中級 (繰り上がり)</button>
+        <button class="btn-lvl btn-lvl-hard" onclick="initGame('hard')">🔴 上級 (2桁のたし算)</button>
+    </div>
+
+    <!-- リザルト modal -->
+    <div class="overlay-screen hidden" id="result-screen">
+        <h2 style="font-size:32px; color:#facc15; margin:0 0 10px 0; text-shadow:0 0 15px rgba(250,204,21,0.5);">STAGE CLEAR</h2>
+        <p style="font-size:20px; margin-bottom:20px;">SCORE: <span id="final-score" style="color:#38bdf8; font-weight:900;">0</span></p>
+        <button class="btn-lvl btn-lvl-mid" onclick="showTitle()">コース選択にもどる</button>
+    </div>
+</div>
+
+<script>
+    const AudioEngine = {
+        ctx: null,
+        init() {
+            if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+        },
+        playLaser() {
+            this.init();
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(900, now);
+            osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(now); osc.stop(now + 0.12);
+        },
+        playHit() {
+            this.init();
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(400, now + 0.2);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(now); osc.stop(now + 0.2);
+        },
+        playExplosion() {
+            this.init();
+            const now = this.ctx.currentTime;
+            const bufferSize = this.ctx.sampleRate * 0.3;
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+            
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, now);
+            filter.frequency.linearRampToValueAtTime(50, now + 0.3);
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+
+            noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+            noise.start(now); noise.stop(now + 0.3);
+        }
+    };
+
+    let canvas, ctx;
+    let width, height;
+    let gameState = 'title';
+    let level = 'easy';
+    let score = 0, combo = 0, questionsLeft = 10;
+    let currentAns = 0;
+
+    let player = { x: 0, y: 0, targetX: 0, speed: 0.2 };
+    let stars = [];
+    let bullets = [];
+    let targets = [];
+    let particles = [];
+    let shockwaves = [];
+
+    window.onload = () => {
+        canvas = document.getElementById('canvas');
+        ctx = canvas.getContext('2d');
+        resize();
+        window.addEventListener('resize', resize);
+        setupControls();
+        initStars();
+        requestAnimationFrame(gameLoop);
+    };
+
+    function resize() {
+        const view = document.getElementById('game-view');
+        width = canvas.width = view.clientWidth;
+        height = canvas.height = view.clientHeight;
+        player.y = height - 120;
+        if (gameState === 'title') player.x = player.targetX = width / 2;
+    }
+
+    function initStars() {
+        stars = [];
+        for (let i = 0; i < 80; i++) {
+            stars.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 2 + 0.5,
+                speed: Math.random() * 3 + 1,
+                alpha: Math.random() * 0.8 + 0.2
+            });
+        }
+    }
+
+    function setupControls() {
+        const view = document.getElementById('game-view');
+        const handleMove = (clientX) => {
+            const rect = view.getBoundingClientRect();
+            const posX = clientX - rect.left;
+            player.targetX = Math.max(30, Math.min(width - 30, posX));
+        };
+
+        view.addEventListener('mousemove', (e) => handleMove(e.clientX));
+        view.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) handleMove(e.touches[0].clientX);
+        });
+
+        const fireBtn = document.getElementById('btn-fire');
+        const fireAction = (e) => {
+            e.preventDefault();
+            if (gameState === 'play') spawnBullet();
+        };
+        fireBtn.addEventListener('mousedown', fireAction);
+        fireBtn.addEventListener('touchstart', fireAction);
+
+        window.addEventListener('keydown', (e) => {
+            if (gameState !== 'play') return;
+            if (e.code === 'Space') spawnBullet();
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') player.targetX = Math.max(30, player.x - 40);
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') player.targetX = Math.min(width - 30, player.x + 40);
+        });
+    }
+
+    function showTitle() {
+        gameState = 'title';
+        document.getElementById('start-screen').classList.remove('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+    }
+
+    function initGame(lvl) {
+        level = lvl;
+        score = 0; combo = 0; questionsLeft = 10;
+        document.getElementById('score').textContent = score;
+        document.getElementById('combo').textContent = '0 COMBO';
+        
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+        
+        player.x = player.targetX = width / 2;
+        bullets = []; targets = []; particles = []; shockwaves = [];
+        gameState = 'play';
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        if (questionsLeft <= 0) {
+            gameState = 'result';
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('result-screen').classList.remove('hidden');
+            return;
+        }
+
+        questionsLeft--;
+        let a, b;
+        if (level === 'easy') {
+            a = Math.floor(Math.random() * 8) + 1;
+            b = Math.floor(Math.random() * 8) + 1;
+        } else if (level === 'mid') {
+            a = Math.floor(Math.random() * 8) + 5;
+            b = Math.floor(Math.random() * 8) + 5;
+        } else {
+            a = Math.floor(Math.random() * 40) + 10;
+            b = Math.floor(Math.random() * 40) + 10;
+        }
+        currentAns = a + b;
+        document.getElementById('q-text').textContent = `${a} + ${b} = ?`;
+
+        targets = [];
+        let answers = [currentAns];
+        while (answers.length < 3) {
+            let dummy = currentAns + (Math.floor(Math.random() * 7) - 3);
+            if (dummy > 0 && !answers.includes(dummy)) answers.push(dummy);
+        }
+        answers.sort(() => Math.random() - 0.5);
+
+        const lanes = [width * 0.22, width * 0.5, width * 0.78];
+        for (let i = 0; i < 3; i++) {
+            targets.push({
+                x: lanes[i],
+                y: -60 - Math.random() * 40,
+                val: answers[i],
+                isCorrect: (answers[i] === currentAns),
+                radius: 28,
+                speed: 0.8 + Math.random() * 0.4
+            });
+        }
+    }
+
+    function spawnBullet() {
+        AudioEngine.playLaser();
+        bullets.push({
+            x: player.x,
+            y: player.y - 30,
+            speed: 16,
+            radius: 4
+        });
+        for (let i = 0; i < 5; i++) {
+            particles.push({
+                x: player.x, y: player.y + 20,
+                vx: (Math.random() - 0.5) * 2, vy: Math.random() * 4 + 2,
+                color: '#38bdf8', size: Math.random() * 4 + 2, life: 15
+            });
+        }
+    }
+
+    function createExplosion(x, y, color, count = 25) {
+        AudioEngine.playExplosion();
+        shockwaves.push({ x, y, radius: 10, maxRadius: 60, alpha: 1, color });
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 6 + 2;
+            particles.push({
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                color, size: Math.random() * 5 + 2, life: 30 + Math.random() * 10
+            });
+        }
+    }
+
+    function gameLoop() {
+        ctx.clearRect(0, 0, width, height);
+
+        // 1. 星くず背景 (高速縦スクロール)
+        ctx.fillStyle = '#fff';
+        stars.forEach(s => {
+            s.y += s.speed * (gameState === 'play' ? 1.5 : 0.5);
+            if (s.y > height) s.y = 0;
+            ctx.globalAlpha = s.alpha;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1.0;
+
+        if (gameState === 'play') {
+            player.x += (player.targetX - player.x) * player.speed;
+
+            // 弾の更新＆衝突判定
+            for (let bIdx = bullets.length - 1; bIdx >= 0; bIdx--) {
+                let b = bullets[bIdx];
+                b.y -= b.speed;
+
+                ctx.strokeStyle = '#f43f5e';
+                ctx.lineWidth = 6;
+                ctx.shadowColor = '#f43f5e';
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y + 12);
+                ctx.lineTo(b.x, b.y);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                if (b.y < -20) {
+                    bullets.splice(bIdx, 1);
+                    continue;
+                }
+
+                for (let tIdx = targets.length - 1; tIdx >= 0; tIdx--) {
+                    let t = targets[tIdx];
+                    let dist = Math.hypot(b.x - t.x, b.y - t.y);
+                    if (dist < b.radius + t.radius) {
+                        bullets.splice(bIdx, 1);
+                        if (t.isCorrect) {
+                            combo++;
+                            score += 100 * combo;
+                            document.getElementById('score').textContent = score;
+                            document.getElementById('combo').textContent = `${combo} COMBO!`;
+                            createExplosion(t.x, t.y, '#38bdf8', 35);
+                            nextQuestion();
+                        } else {
+                            combo = 0;
+                            document.getElementById('combo').textContent = `0 COMBO`;
+                            createExplosion(t.x, t.y, '#f43f5e', 20);
+                            AudioEngine.playHit();
+                            targets.splice(tIdx, 1);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // ターゲット更新
+            for (let tIdx = targets.length - 1; tIdx >= 0; tIdx--) {
+                let t = targets[tIdx];
+                t.y += t.speed;
+
+                ctx.save();
+                ctx.translate(t.x, t.y);
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.strokeStyle = t.isCorrect ? '#38bdf8' : '#a855f7';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = ctx.strokeStyle;
+                ctx.shadowBlur = 15;
+
+                ctx.beginPath();
+                ctx.arc(0, 0, t.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = '#fff';
+                ctx.font = '900 22px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(t.val, 0, 2);
+
+                ctx.restore();
+
+                if (t.y > height + 40) {
+                    if (t.isCorrect) {
+                        combo = 0;
+                        document.getElementById('combo').textContent = `0 COMBO`;
+                        nextQuestion();
+                    } else {
+                        targets.splice(tIdx, 1);
+                    }
+                }
+            }
+        }
+
+        // プレイヤー機体描画
+        if (gameState === 'play' || gameState === 'title') {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            const jetSize = Math.random() * 8 + 12;
+            ctx.fillStyle = '#38bdf8';
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.moveTo(-8, 15);
+            ctx.lineTo(0, 15 + jetSize);
+            ctx.lineTo(8, 15);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, -28);
+            ctx.lineTo(24, 16);
+            ctx.lineTo(0, 8);
+            ctx.lineTo(-24, 16);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(0, -6, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // 衝撃波 & パーティクル更新
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+            let sw = shockwaves[i];
+            sw.radius += 3;
+            sw.alpha -= 0.04;
+            if (sw.alpha <= 0) {
+                shockwaves.splice(i, 1);
+            } else {
+                ctx.strokeStyle = sw.color;
+                ctx.lineWidth = 3;
+                ctx.globalAlpha = sw.alpha;
+                ctx.beginPath();
+                ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+            } else {
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+</script>
+</body>
+</html>
