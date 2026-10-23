@@ -97,6 +97,20 @@
         <a href="baisu.html" class="menu-btn btn-baisu">🎯 九九のばいすう タップ！<br><span class="btn-desc">2〜9の段を選んで倍数をさがそう！</span></a>
         <a href="warizanz.html" class="menu-btn btn-wari">➗ わりざん筆算マスター<br><span class="btn-desc">ひっ算の解き方をステップ練習</span></a>
         <a href="bunshou.html" class="menu-btn btn-bunshou">📚 さんすう 文章題<br><span class="btn-desc">おはなしを よんで こたえよう！</span></a>
+<a href="ghost.html" class="menu-btn" style="background-color: #6366f1; border-bottom: 5px solid #4338ca;">
+    👻 ゴースト・アディショナル
+    <br><span class="btn-desc">消える数字を覚えて足し算！</span>
+	</a>
+
+	<a href="dokkiri.html" class="menu-btn" style="background-color: #2563eb; border-bottom: 5px solid #1d4ed8;">
+	    ⚡ ドッキリ加算
+	    <br><span class="btn-desc">文字の大きさに騙されるな！</span>
+	</a>
+
+	<a href="dot.html" class="menu-btn" style="background-color: #10b981; border-bottom: 5px solid #047857;">
+	    🎯 ドット・インパクト
+	    <br><span class="btn-desc">一瞬の丸の数を直感で足し算！</span>
+	</a>
     </div>
 
     <!-- 2️⃣ パズル・思考力・図形グループ -->

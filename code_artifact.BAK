@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人向け国債 一括比較＆金利カスタムシミュレーター</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        input[type=range] {
+            accent-color: #2563eb;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen py-4 px-2 sm:px-4">
+    <div class="max-w-5xl mx-auto space-y-4">
+        
+        <!-- ヘッダー -->
+        <header class="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-100 text-blue-700 p-1.5 rounded-lg">
+                    <i data-lucide="calculator" class="w-5 h-5"></i>
+                </div>
+                <h1 class="text-base sm:text-lg font-bold text-slate-900">個人向け国債 一括比較＆金利カスタムシミュレーター</h1>
+            </div>
+            <span class="text-xs text-slate-500">※税率20.315%計算 / 半年複利非考慮</span>
+        </header>
+
+        <!-- メイン入力・試算領域 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 space-y-4">
+            
+            <!-- 1. 投資金額設定 -->
+            <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <label for="amountInput" class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                        <i data-lucide="japanese-yen" class="w-4 h-4 text-blue-600"></i>
+                        購入金額（投資額）
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1">
+                            <input type="number" id="amountInput" value="2000" min="1" max="10000" step="1" 
+                                   class="w-28 text-right font-bold text-lg border border-slate-300 rounded-lg px-2 py-0.5 text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <span class="font-bold text-sm text-slate-700">万円</span>
+                        </div>
+                        <!-- 履歴追加ボタン -->
+                        <button onclick="addCurrentToHistory()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-sm">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            結果を履歴に保存
+                        </button>
+                    </div>
+                </div>
+
+                <!-- スライダー & プリセット -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                    <div class="md:col-span-2 flex items-center gap-3">
+                        <input type="range" id="amountSlider" min="10" max="10000" step="10" value="2000" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 justify-end text-xs">
+                        <button onclick="setAmount(500)" class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-md transition">500万</button>
+                        <button onclick="setAmount(1000)" class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-md transition">1,000万</button>
+                        <button onclick="setAmount(2000)" class="bg-blue-600 text-white font-bold px-2.5 py-1 rounded-md transition">2,000万</button>
+                        <button onclick="setAmount(5000)" class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-md transition">5,000万</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 金利設定パネル -->
+            <div class="bg-blue-50/60 p-3 sm:p-4 rounded-xl border border-blue-200/80 space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                        <i data-lucide="sliders" class="w-4 h-4 text-blue-600"></i>
+                        <span>適用金利カスタマイズ（将来の追加利上げ・新募集条件のシミュレーション）</span>
+                    </div>
+                    <button onclick="resetRatesToDefault()" class="text-[11px] text-blue-700 hover:text-blue-900 underline flex items-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                        金利を初期値に戻す
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <!-- 固定5年 金利設定 -->
+                    <div class="bg-white p-2.5 rounded-lg border border-blue-100 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <label for="fixed5RateInput" class="font-bold text-slate-700">固定5年 適用金利</label>
+                            <div class="flex items-center gap-0.5 font-bold text-blue-700">
+                                <input type="number" id="fixed5RateInput" step="0.01" min="0.05" max="10.0" 
+                                       class="w-16 text-right border border-slate-300 rounded px-1 py-0.5 text-xs focus:ring-1 focus:ring-blue-500">
+                                <span>%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="fixed5RateSlider" min="0.05" max="5.0" step="0.01" 
+                               class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- 固定3年 金利設定 -->
+                    <div class="bg-white p-2.5 rounded-lg border border-blue-100 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <label for="fixed3RateInput" class="font-bold text-slate-700">固定3年 適用金利</label>
+                            <div class="flex items-center gap-0.5 font-bold text-blue-700">
+                                <input type="number" id="fixed3RateInput" step="0.01" min="0.05" max="10.0" 
+                                       class="w-16 text-right border border-slate-300 rounded px-1 py-0.5 text-xs focus:ring-1 focus:ring-blue-500">
+                                <span>%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="fixed3RateSlider" min="0.05" max="5.0" step="0.01" 
+                               class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- 変動10年 基準金利設定 -->
+                    <div class="bg-white p-2.5 rounded-lg border border-blue-100 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <label for="baseRateInput" class="font-bold text-slate-700">変動10年 基準金利</label>
+                            <div class="flex items-center gap-0.5 font-bold text-blue-700">
+                                <input type="number" id="baseRateInput" step="0.01" min="0.1" max="10.0" 
+                                       class="w-16 text-right border border-slate-300 rounded px-1 py-0.5 text-xs focus:ring-1 focus:ring-blue-500">
+                                <span>%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="baseRateSlider" min="0.1" max="5.0" step="0.05" 
+                               class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="text-[10px] text-slate-500 text-right">
+                            適用金利(×0.66): <strong id="calculatedRate" class="text-blue-700">2.05%</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 3タイプ同時比較グリッド -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                
+                <!-- 固定5年 -->
+                <div class="bg-blue-50/50 border-2 border-blue-500 rounded-xl p-3.5 space-y-2 relative flex flex-col justify-between">
+                    <div class="absolute -top-2.5 right-3 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        高金利で固定
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-baseline">
+                            <h2 class="font-bold text-slate-900 text-base">固定 5年</h2>
+                            <span class="text-lg font-extrabold text-blue-600" id="fixed5CardRate">年 2.39 %</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-2">5年間金利が変わらない</p>
+
+                        <div class="bg-white p-2 rounded-lg border border-blue-100 mb-2 text-center">
+                            <span class="text-[11px] text-slate-500 block font-medium">ひと月あたりの手取り（目安）</span>
+                            <span class="text-xl font-black text-amber-600"><span id="fixed5Monthly">0</span> <span class="text-xs font-bold text-slate-700">円/月</span></span>
+                        </div>
+
+                        <div class="space-y-1.5 text-xs">
+                            <div class="flex justify-between text-slate-600">
+                                <span>年間額面利息（税引前）:</span>
+                                <span class="font-bold text-slate-800"><span id="fixed5AnnualGross">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-500 text-[11px]">
+                                <span>うち税金（20.315%）:</span>
+                                <span class="text-red-600">－<span id="fixed5AnnualTax">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600 pt-1 border-t border-slate-200">
+                                <span>年間手取り利息:</span>
+                                <span class="font-bold text-slate-800"><span id="fixed5Annual">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-900 pt-1 border-t border-blue-200/60 font-bold">
+                                <span>5年間合計手取り:</span>
+                                <span class="text-blue-700"><span id="fixed5Total">0</span> 円</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 固定3年 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-baseline">
+                            <h2 class="font-bold text-slate-900 text-base">固定 3年</h2>
+                            <span class="text-lg font-bold text-blue-600" id="fixed3CardRate">年 2.07 %</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-2">短期間で安全運用</p>
+
+                        <div class="bg-white p-2 rounded-lg border border-slate-200 mb-2 text-center">
+                            <span class="text-[11px] text-slate-500 block font-medium">ひと月あたりの手取り（目安）</span>
+                            <span class="text-xl font-black text-slate-800"><span id="fixed3Monthly">0</span> <span class="text-xs font-bold text-slate-700">円/月</span></span>
+                        </div>
+
+                        <div class="space-y-1.5 text-xs">
+                            <div class="flex justify-between text-slate-600">
+                                <span>年間額面利息（税引前）:</span>
+                                <span class="font-bold text-slate-800"><span id="fixed3AnnualGross">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-500 text-[11px]">
+                                <span>うち税金（20.315%）:</span>
+                                <span class="text-red-600">－<span id="fixed3AnnualTax">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600 pt-1 border-t border-slate-200">
+                                <span>年間手取り利息:</span>
+                                <span class="font-bold text-slate-800"><span id="fixed3Annual">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-900 pt-1 border-t border-slate-200 font-bold">
+                                <span>3年間合計手取り:</span>
+                                <span class="text-slate-800"><span id="fixed3Total">0</span> 円</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 変動10年 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-baseline">
+                            <h2 class="font-bold text-slate-900 text-base">変動 10年</h2>
+                            <span class="text-lg font-bold text-blue-600" id="var10CardRate">年 2.05 %</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-2">金利上昇時に利回りUP</p>
+
+                        <div class="bg-white p-2 rounded-lg border border-slate-200 mb-2 text-center">
+                            <span class="text-[11px] text-slate-500 block font-medium">ひと月あたりの手取り（目安）</span>
+                            <span class="text-xl font-black text-slate-800"><span id="var10Monthly">0</span> <span class="text-xs font-bold text-slate-700">円/月</span></span>
+                        </div>
+
+                        <div class="space-y-1.5 text-xs">
+                            <div class="flex justify-between text-slate-600">
+                                <span>年間額面利息（税引前）:</span>
+                                <span class="font-bold text-slate-800"><span id="var10AnnualGross">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-500 text-[11px]">
+                                <span>うち税金（20.315%）:</span>
+                                <span class="text-red-600">－<span id="var10AnnualTax">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600 pt-1 border-t border-slate-200">
+                                <span>年間手取り利息:</span>
+                                <span class="font-bold text-slate-800"><span id="var10Annual">0</span> 円</span>
+                            </div>
+                            <div class="flex justify-between text-slate-900 pt-1 border-t border-slate-200 font-bold">
+                                <span>10年間合計手取り:</span>
+                                <span class="text-slate-800"><span id="var10Total">0</span> 円</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- 4. シミュレーション保存履歴 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="history" class="w-5 h-5 text-blue-600"></i>
+                    <h2 class="font-bold text-slate-900 text-base">比較用 試算メモ履歴</h2>
+                    <span id="historyCount" class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded-full">0件</span>
+                </div>
+                <button onclick="clearHistory()" class="text-xs text-slate-400 hover:text-red-500 transition flex items-center gap-1">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    履歴をすべて消去
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-500" id="emptyHistoryMsg">※「結果を履歴に保存」ボタンを押すと、金額・条件ごとの結果がここに一覧で蓄積され一括比較できます。</p>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left border-collapse min-w-[700px]" id="historyTable" style="display: none;">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
+                            <th class="py-2 px-3">投資額</th>
+                            <th class="py-2 px-3 text-center bg-blue-50/70 text-blue-900">固定5年 (月手取り / 額面 / 税金)</th>
+                            <th class="py-2 px-3 text-center">固定3年 (月手取り / 額面 / 税金)</th>
+                            <th class="py-2 px-3 text-center">変動10年 (月手取り / 額面 / 税金)</th>
+                            <th class="py-2 px-1 text-center w-10">削除</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTbody" class="divide-y divide-slate-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const DEFAULT_CONFIG = {
+            amountWan: 2000,
+            fixed5Rate: 2.39,
+            fixed3Rate: 2.07,
+            baseRate: 3.10
+        };
+
+        const TAX_RATE = 0.20315;
+
+        const amountInput = document.getElementById('amountInput');
+        const amountSlider = document.getElementById('amountSlider');
+
+        const fixed5RateInput = document.getElementById('fixed5RateInput');
+        const fixed5RateSlider = document.getElementById('fixed5RateSlider');
+
+        const fixed3RateInput = document.getElementById('fixed3RateInput');
+        const fixed3RateSlider = document.getElementById('fixed3RateSlider');
+
+        const baseRateInput = document.getElementById('baseRateInput');
+        const baseRateSlider = document.getElementById('baseRateSlider');
+        const calculatedRate = document.getElementById('calculatedRate');
+
+        let currentSimData = null;
+        let historyList = [];
+
+        function bindInputAndSlider(inputEl, sliderEl) {
+            inputEl.addEventListener('input', () => {
+                sliderEl.value = inputEl.value;
+                updateSim();
+            });
+            sliderEl.addEventListener('input', () => {
+                inputEl.value = sliderEl.value;
+                updateSim();
+            });
+        }
+
+        bindInputAndSlider(amountInput, amountSlider);
+        bindInputAndSlider(fixed5RateInput, fixed5RateSlider);
+        bindInputAndSlider(fixed3RateInput, fixed3RateSlider);
+        bindInputAndSlider(baseRateInput, baseRateSlider);
+
+        function setAmount(val) {
+            amountInput.value = val;
+            amountSlider.value = val;
+            updateSim();
+        }
+
+        function resetRatesToDefault() {
+            fixed5RateInput.value = DEFAULT_CONFIG.fixed5Rate;
+            fixed5RateSlider.value = DEFAULT_CONFIG.fixed5Rate;
+
+            fixed3RateInput.value = DEFAULT_CONFIG.fixed3Rate;
+            fixed3RateSlider.value = DEFAULT_CONFIG.fixed3Rate;
+
+            baseRateInput.value = DEFAULT_CONFIG.baseRate;
+            baseRateSlider.value = DEFAULT_CONFIG.baseRate;
+
+            updateSim();
+        }
+
+        function updateSim() {
+            const principalWan = parseFloat(amountInput.value) || 0;
+            const principal = principalWan * 10000;
+
+            const fixed5Rate = parseFloat(fixed5RateInput.value) || 0;
+            const fixed3Rate = parseFloat(fixed3RateInput.value) || 0;
+            const baseRate = parseFloat(baseRateInput.value) || 0;
+
+            let var10Rate = Math.floor((baseRate * 0.66) * 100) / 100;
+            if (var10Rate < 0.05) var10Rate = 0.05;
+
+            calculatedRate.textContent = var10Rate.toFixed(2) + '%';
+            document.getElementById('fixed5CardRate').textContent = '年 ' + fixed5Rate.toFixed(2) + ' %';
+            document.getElementById('fixed3CardRate').textContent = '年 ' + fixed3Rate.toFixed(2) + ' %';
+            document.getElementById('var10CardRate').textContent = '年 ' + var10Rate.toFixed(2) + ' %';
+
+            function calc(rate, term) {
+                const annualGross = principal * (rate / 100);       // 年間額面利息
+                const annualTax = annualGross * TAX_RATE;            // 年間税金
+                const annualNet = annualGross - annualTax;          // 年間手取り額
+
+                return {
+                    rate: rate,
+                    annualGross: Math.round(annualGross),
+                    annualTax: Math.round(annualTax),
+                    monthly: Math.round(annualNet / 12),
+                    annual: Math.round(annualNet),
+                    total: Math.round(annualNet * term)
+                };
+            }
+
+            const f5 = calc(fixed5Rate, 5);
+            const f3 = calc(fixed3Rate, 3);
+            const v10 = calc(var10Rate, 10);
+
+            // 固定5年反映
+            document.getElementById('fixed5Monthly').textContent = f5.monthly.toLocaleString();
+            document.getElementById('fixed5AnnualGross').textContent = f5.annualGross.toLocaleString();
+            document.getElementById('fixed5AnnualTax').textContent = f5.annualTax.toLocaleString();
+            document.getElementById('fixed5Annual').textContent = f5.annual.toLocaleString();
+            document.getElementById('fixed5Total').textContent = f5.total.toLocaleString();
+
+            // 固定3年反映
+            document.getElementById('fixed3Monthly').textContent = f3.monthly.toLocaleString();
+            document.getElementById('fixed3AnnualGross').textContent = f3.annualGross.toLocaleString();
+            document.getElementById('fixed3AnnualTax').textContent = f3.annualTax.toLocaleString();
+            document.getElementById('fixed3Annual').textContent = f3.annual.toLocaleString();
+            document.getElementById('fixed3Total').textContent = f3.total.toLocaleString();
+
+            // 変動10年反映
+            document.getElementById('var10Monthly').textContent = v10.monthly.toLocaleString();
+            document.getElementById('var10AnnualGross').textContent = v10.annualGross.toLocaleString();
+            document.getElementById('var10AnnualTax').textContent = v10.annualTax.toLocaleString();
+            document.getElementById('var10Annual').textContent = v10.annual.toLocaleString();
+            document.getElementById('var10Total').textContent = v10.total.toLocaleString();
+
+            currentSimData = {
+                amountWan: principalWan,
+                f5, f3, v10
+            };
+        }
+
+        function addCurrentToHistory() {
+            if (!currentSimData) return;
+            historyList.unshift({ id: Date.now(), ...currentSimData });
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const tbody = document.getElementById('historyTbody');
+            const table = document.getElementById('historyTable');
+            const emptyMsg = document.getElementById('emptyHistoryMsg');
+            const countLabel = document.getElementById('historyCount');
+
+            countLabel.textContent = historyList.length + '件';
+
+            if (historyList.length === 0) {
+                table.style.display = 'none';
+                emptyMsg.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyMsg.style.display = 'none';
+
+            tbody.innerHTML = historyList.map(item => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-2.5 px-3 font-bold text-slate-900">
+                        ${item.amountWan.toLocaleString()} 万円
+                    </td>
+                    <td class="py-2.5 px-3 text-center bg-blue-50/40">
+                        <span class="font-extrabold text-amber-600">${item.f5.monthly.toLocaleString()} 円/月</span>
+                        <span class="text-[10px] text-slate-500 block">（額面: ${item.f5.annualGross.toLocaleString()}円/年 | 税: ${item.f5.annualTax.toLocaleString()}円/年）</span>
+                        <span class="text-[10px] text-blue-700 font-bold block">5年手取り合計: ${item.f5.total.toLocaleString()}円</span>
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                        <span class="font-bold text-slate-800">${item.f3.monthly.toLocaleString()} 円/月</span>
+                        <span class="text-[10px] text-slate-500 block">（額面: ${item.f3.annualGross.toLocaleString()}円/年 | 税: ${item.f3.annualTax.toLocaleString()}円/年）</span>
+                        <span class="text-[10px] text-slate-700 font-bold block">3年手取り合計: ${item.f3.total.toLocaleString()}円</span>
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                        <span class="font-bold text-slate-800">${item.v10.monthly.toLocaleString()} 円/月</span>
+                        <span class="text-[10px] text-slate-500 block">（額面: ${item.v10.annualGross.toLocaleString()}円/年 | 税: ${item.v10.annualTax.toLocaleString()}円/年）</span>
+                        <span class="text-[10px] text-slate-700 font-bold block">10年手取り合計: ${item.v10.total.toLocaleString()}円</span>
+                    </td>
+                    <td class="py-2.5 px-1 text-center">
+                        <button onclick="removeHistory(${item.id})" class="text-slate-300 hover:text-red-500 p-1">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function removeHistory(id) {
+            historyList = historyList.filter(item => item.id !== id);
+            renderHistory();
+        }
+
+        function clearHistory() {
+            historyList = [];
+            renderHistory();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            resetRatesToDefault();
+        });
+    </script>
+</body>
+</html>

@@ -67,6 +67,8 @@
         .btn-regi { background-color: #f43f5e; border-bottom: 5px solid #be123c; }
         .btn-zukei { background-color: #a855f7; border-bottom: 5px solid #7e22ce; }
         .btn-ladder { background-color: #0284c7; border-bottom: 5px solid #0369a1; }
+        .btn-pan { background-color: #ec4899; border-bottom: 5px solid #be185d; }
+        .btn-bond { background-color: #0f766e; border-bottom: 5px solid #115e59; }
 
         .btn-desc {
             display: inline-block; font-size: 11px; font-weight: normal; margin-top: 3px;
@@ -82,9 +84,9 @@
 
     <!-- 🗂️ カテゴリ選択タブ -->
     <div class="category-tabs">
-        <button class="tab-btn active" onclick="switchCategory('calc')">🧮 けいさん</button>
-        <button class="tab-btn" onclick="switchCategory('puzzle')">🧩 パズル・ずけい</button>
-        <button class="tab-btn" onclick="switchCategory('life')">🏪 せいかつ・体感</button>
+        <button class="tab-btn active" onclick="switchCategory('calc', event)">🧮 けいさん</button>
+        <button class="tab-btn" onclick="switchCategory('puzzle', event)">🧩 パズル・ずけい</button>
+        <button class="tab-btn" onclick="switchCategory('life', event)">🏪 せいかつ・体感</button>
     </div>
 
     <!-- 1️⃣ 計算特化グループ -->
@@ -97,24 +99,20 @@
         <a href="baisu.html" class="menu-btn btn-baisu">🎯 九九のばいすう タップ！<br><span class="btn-desc">2〜9の段を選んで倍数をさがそう！</span></a>
         <a href="warizanz.html" class="menu-btn btn-wari">➗ わりざん筆算マスター<br><span class="btn-desc">ひっ算の解き方をステップ練習</span></a>
         <a href="bunshou.html" class="menu-btn btn-bunshou">📚 さんすう 文章題<br><span class="btn-desc">おはなしを よんで こたえよう！</span></a>
-<a href="ghost.html" class="menu-btn" style="background-color: #6366f1; border-bottom: 5px solid #4338ca;">
-    👻 ゴースト・アディショナル
-    <br><span class="btn-desc">消える数字を覚えて足し算！</span>
-	</a>
-
-	<a href="dokkiri.html" class="menu-btn" style="background-color: #2563eb; border-bottom: 5px solid #1d4ed8;">
-	    ⚡ ドッキリ加算
-	    <br><span class="btn-desc">文字の大きさに騙されるな！</span>
-	</a>
-
-	<a href="dot.html" class="menu-btn" style="background-color: #10b981; border-bottom: 5px solid #047857;">
-	    🎯 ドット・インパクト
-	    <br><span class="btn-desc">一瞬の丸の数を直感で足し算！</span>
-	</a>
+        <a href="ghost.html" class="menu-btn" style="background-color: #6366f1; border-bottom: 5px solid #4338ca;">
+            👻 ゴースト・アディショナル<br><span class="btn-desc">消える数字を覚えて足し算！</span>
+        </a>
+        <a href="dokkiri.html" class="menu-btn" style="background-color: #2563eb; border-bottom: 5px solid #1d4ed8;">
+            ⚡ ドッキリ加算<br><span class="btn-desc">文字の大きさに騙されるな！</span>
+        </a>
+        <a href="dot.html" class="menu-btn" style="background-color: #10b981; border-bottom: 5px solid #047857;">
+            🎯 ドット・インパクト<br><span class="btn-desc">一瞬の丸の数を直感で足し算！</span>
+        </a>
     </div>
 
     <!-- 2️⃣ パズル・思考力・図形グループ -->
     <div class="category-content" id="cat-puzzle">
+        <a href="pan.html" class="menu-btn btn-pan">🎈 わくわく！スーパーパン<br><span class="btn-desc">ワイヤーをうちあげて風船をわろう！</span></a>
         <a href="tenbin.html" class="menu-btn btn-tenbin">⚖️ てんびんパズル<br><span class="btn-desc">左右がつりあう数字をえらぼう！</span></a>
         <a href="zukei.html" class="menu-btn btn-zukei">🔷 なかまはずれ図形<br><span class="btn-desc">ちがう形の図形を見つけよう！</span></a>
         <a href="number-chain.html" class="menu-btn btn-chain">🔗 ナンバー・チェイン<br><span class="btn-desc">なぞって目標の数をつくるパズル</span></a>
@@ -128,27 +126,23 @@
         <a href="okaimono.html" class="menu-btn btn-okaimono">🪙 お買い物ピッタリ<br><span class="btn-desc">コインをえらんでぴったりはらおう！</span></a>
         <a href="regi.html" class="menu-btn btn-regi">🏪 レジ打ちマスター！<br><span class="btn-desc">「おつりはこれだけ！」正確に渡そう！</span></a>
         <a href="ladder-real.html" class="menu-btn btn-ladder">🏃‍♂️ 本格ラダーダッシュ！<br><span class="btn-desc">「左中・右中・左外・右外」で駆け抜けろ！</span></a>
+        <a href="code_artifact.html" class="menu-btn btn-bond">🏦 国債シミュレーター<br><span class="btn-desc">金利や投資額をリアルタイム計算！</span></a>
     </div>
 
 </div>
 
 <script>
-    function switchCategory(catName) {
-        // 全タブのactive解除
+    function switchCategory(catName, evt) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        // 全コンテンツの非表示
         document.querySelectorAll('.category-content').forEach(content => content.classList.remove('active'));
 
-        // 選択されたタブ・コンテンツのアクティブ化
-        if (catName === 'calc') {
-            event.currentTarget.classList.add('active');
-            document.getElementById('cat-calc').classList.add('active');
-        } else if (catName === 'puzzle') {
-            event.currentTarget.classList.add('active');
-            document.getElementById('cat-puzzle').classList.add('active');
-        } else if (catName === 'life') {
-            event.currentTarget.classList.add('active');
-            document.getElementById('cat-life').classList.add('active');
+        if (evt && evt.currentTarget) {
+            evt.currentTarget.classList.add('active');
+        }
+
+        const target = document.getElementById('cat-' + catName);
+        if (target) {
+            target.classList.add('active');
         }
     }
 </script>

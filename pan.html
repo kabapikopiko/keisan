@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>わくわく！スーパーパン</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* 画面左上の「メニュー」ボタン */
+        .back-to-menu {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            background: white;
+            color: #e67e22;
+            border: 2px solid #ffbe76;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-weight: bold;
+            font-size: 14px;
+            text-decoration: none;
+            box-shadow: 0 4px 0 #f0932b;
+            transition: transform 0.1s;
+            z-index: 100;
+            cursor: pointer;
+        }
+
+        .back-to-menu:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #f0932b;
+        }
+
+        .wrapper {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        #game-container {
+            background-color: white;
+            border: 6px solid #ffbe76;
+            border-radius: 24px;
+            box-shadow: 0 10px 0 #f0932b, 0 15px 30px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 340px;
+            height: 92vh;
+            max-height: 580px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        /* アナウンス用フラッシュオーバーレイ */
+        #flash-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        #flash-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #flash-mark { font-size: 60px; line-height: 1; margin-bottom: 10px; }
+        #flash-text { font-size: 22px; font-weight: bold; color: #2f3640; text-align: center; }
+
+        /* モード切替タブ */
+        .calc-tabs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+
+        .calc-tab-btn {
+            background: #f1f2f6;
+            border: 2px solid #ced6e0;
+            border-radius: 12px;
+            padding: 8px 0;
+            font-size: 13px;
+            font-weight: bold;
+            color: #57606f;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.2s;
+        }
+
+        .calc-tab-btn.active {
+            background: #ff9f43;
+            color: white;
+            border-color: #e67e22;
+        }
+
+        /* レベル選択画面 */
+        #level-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            gap: 10px;
+            width: 100%;
+        }
+
+        #level-screen h2 {
+            margin: 0 0 2px 0;
+            color: #d35400;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .btn-level {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+        }
+
+        .btn-level:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-easy { background: #2ed573; box-shadow: 0 4px 0 #26af5f; }
+        .btn-medium { background: #ffa502; box-shadow: 0 4px 0 #eccc68; }
+        .btn-hard { background: #ff4757; box-shadow: 0 4px 0 #ff6b81; }
+
+        /* プレイ画面 */
+        #play-screen {
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .game-header h2 {
+            margin: 0 0 4px 0;
+            color: #d35400;
+            font-size: 15px;
+            text-shadow: 1px 1px 0 white;
+            text-align: center;
+        }
+
+        .score-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: bold;
+            color: #2f3640;
+            background: #f1f2f6;
+            padding: 6px 12px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+        }
+
+        .score-val { color: #e67e22; }
+        .life-val { color: #ff4757; }
+
+        /* キャンバス領域 */
+        #canvas-wrapper {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            border: 4px dashed #c5eff7;
+            border-radius: 16px;
+            overflow: hidden;
+            background-color: #f7f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            background: #111827;
+            border-radius: 10px;
+        }
+
+        /* 画面内操作ボタン */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.2fr;
+            gap: 8px;
+            margin-top: 8px;
+            height: 60px;
+        }
+
+        .ctrl-btn {
+            background: #f1f2f6;
+            border: 2px solid #ced6e0;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2f3640;
+            box-shadow: 0 4px 0 #ced6e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .ctrl-btn:active, .ctrl-btn.pressed {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #ced6e0;
+            background: #dfe4ea;
+        }
+
+        .btn-fire {
+            background: #ff9f43;
+            color: white;
+            border-color: #e67e22;
+            box-shadow: 0 4px 0 #d35400;
+            font-size: 16px;
+        }
+
+        .btn-fire:active, .btn-fire.pressed {
+            box-shadow: 0 2px 0 #d35400;
+            background: #e67e22;
+        }
+
+        /* リザルト画面 */
+        #result-screen {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        #result-screen h2 {
+            font-size: 22px;
+            color: #d35400;
+            margin-bottom: 12px;
+        }
+
+        .score-result {
+            font-size: 32px;
+            color: #2ed573;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .time-label { font-size: 13px; color: #747d8c; }
+        .time-text { font-size: 18px; font-weight: bold; color: #2f3640; margin-bottom: 10px; }
+
+        .btn-restart {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #ff9f43;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 4px 0 #e67e22;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .btn-restart:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #e67e22;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" id="back-btn" class="back-to-menu" onclick="playSound('click')">🏠 メニュー</a>
+
+<div class="wrapper">
+    <div id="game-container">
+        <!-- アナウンス用オーバーレイ -->
+        <div id="flash-overlay">
+            <div id="flash-mark">💥</div>
+            <div id="flash-text">ゲームオーバー！</div>
+        </div>
+
+        <!-- レベル・モード選択画面 -->
+        <div id="level-screen">
+            <h2>たまのスピード</h2>
+            <div class="calc-tabs">
+                <button class="calc-tab-btn active" id="tab-normal" onclick="setSpeedMode('normal')">ふつう 🎈</button>
+                <button class="calc-tab-btn" id="tab-fast" onclick="setSpeedMode('fast')">はやい ⚡</button>
+            </div>
+
+            <h2>むずかしさは？</h2>
+            <button class="btn-level btn-easy" onclick="selectLevel('easy')">🟢 しょきゅう (小たま1)</button>
+            <button class="btn-level btn-medium" onclick="selectLevel('medium')">🟡 ちゅうきゅう (中たま1)</button>
+            <button class="btn-level btn-hard" onclick="selectLevel('hard')">🔴 じょうきゅう (大たま1)</button>
+        </div>
+
+        <!-- プレイ画面 -->
+        <div id="play-screen">
+            <div class="game-header">
+                <h2>🎯 <span id="mode-title">わくわく！スーパーパン</span></h2>
+                <div class="score-bar">
+                    <span>スコア: <span id="current-score" class="score-val">0</span></span>
+                    <span>ライフ: <span id="current-lives" class="life-val">❤️❤️❤️</span></span>
+                </div>
+            </div>
+
+            <div id="canvas-wrapper">
+                <canvas id="gameCanvas" width="300" height="300"></canvas>
+            </div>
+
+            <!-- タッチ用ボタン -->
+            <div class="controls">
+                <div class="ctrl-btn" id="btn-left">⬅️</div>
+                <div class="ctrl-btn" id="btn-right">➡️</div>
+                <div class="ctrl-btn btn-fire" id="btn-fire">🔫 はしゃ</div>
+            </div>
+        </div>
+
+        <!-- リザルト画面 -->
+        <div id="result-screen">
+            <h2 id="result-title">🎉 ゲームクリア！</h2>
+            <div class="time-label">かくとくスコア</div>
+            <div class="score-result" id="final-score-val">0 点</div>
+            <div class="time-label">せいかん時間</div>
+            <div class="time-text" id="final-time">00秒</div>
+            <button class="btn-restart" onclick="showLevelSelect()">もういちどチャレンジ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 音声処理 (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
+            gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+            osc.start(now); osc.stop(now + 0.08);
+        } else if (type === 'shoot') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'triangle'; 
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'pop') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+            gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'hit') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(60, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        }
+    }
+
+    // --- ゲームUI状態 ---
+    let speedMode = "normal"; // normal, fast
+    let currentLevel = "medium";
+    let score = 0;
+    let lives = 3;
+    let gameTime = 0;
+    let startTime = 0;
+    let animationFrameId = null;
+    let isGameOver = false;
+
+    // DOM要素
+    const backBtn = document.getElementById('back-btn');
+    const levelScreen = document.getElementById('level-screen');
+    const playScreen = document.getElementById('play-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const currentScoreEl = document.getElementById('current-score');
+    const currentLivesEl = document.getElementById('current-lives');
+    const flashOverlay = document.getElementById('flash-overlay');
+    const flashMark = document.getElementById('flash-mark');
+    const flashText = document.getElementById('flash-text');
+    const resultTitleEl = document.getElementById('result-title');
+    const finalScoreValEl = document.getElementById('final-score-val');
+    const finalTimeEl = document.getElementById('final-time');
+
+    // Canvas関連
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // ゲームオブジェクト設定
+    const player = {
+        x: 140,
+        y: 270,
+        width: 20,
+        height: 26,
+        speed: 3.5,
+        dx: 0
+    };
+
+    let harpoon = null; // { x, y, active }
+    let balls = [];     // Array of ball objects
+    let particles = []; // パティクル演出
+
+    // キー入力状態
+    const keys = { left: false, right: false, fire: false };
+
+    // スピードモード切替
+    function setSpeedMode(mode) {
+        playSound('click');
+        speedMode = mode;
+        document.getElementById('tab-normal').classList.toggle('active', mode === 'normal');
+        document.getElementById('tab-fast').classList.toggle('active', mode === 'fast');
+    }
+
+    function showLevelSelect() {
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        resultScreen.style.display = 'none';
+        levelScreen.style.display = 'flex';
+        backBtn.classList.remove('hidden');
+    }
+
+    function selectLevel(level) {
+        playSound('click');
+        currentLevel = level;
+        initGame();
+    }
+
+    function initGame() {
+        score = 0;
+        lives = 3;
+        isGameOver = false;
+        currentScoreEl.innerText = score;
+        updateLivesDisplay();
+
+        levelScreen.style.display = 'none';
+        playScreen.style.display = 'flex';
+        resultScreen.style.display = 'none';
+        flashOverlay.classList.remove('active');
+        backBtn.classList.add('hidden');
+
+        // プレイヤーリセット
+        player.x = canvas.width / 2 - player.width / 2;
+        harpoon = null;
+        particles = [];
+
+        // ボール初期化（難易度別）
+        balls = [];
+        const speedMult = speedMode === 'fast' ? 1.4 : 1.0;
+
+        if (currentLevel === 'easy') {
+            // 小さいボール 2つ
+            balls.push(createBall(80, 80, 1, 1.5 * speedMult, -2));
+            balls.push(createBall(200, 80, 1, -1.5 * speedMult, -2));
+        } else if (currentLevel === 'medium') {
+            // 中ボール 1つ
+            balls.push(createBall(150, 60, 2, 1.8 * speedMult, -1));
+        } else {
+            // 大ボール 1つ
+            balls.push(createBall(100, 50, 3, 2.0 * speedMult, 0));
+        }
+
+        startTime = performance.now();
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        gameLoop();
+    }
+
+    function updateLivesDisplay() {
+        currentLivesEl.innerText = "❤️".repeat(Math.max(0, lives));
+    }
+
+    // ボール生成 helper
+    // size: 3(大: r=24), 2(中: r=16), 1(小: r=10), 0(極小: r=6)
+    function createBall(x, y, size, vx, vy) {
+        const radii = [6, 11, 18, 26];
+        const colors = ['#ff4757', '#ffa502', '#2ed573', '#1e90ff'];
+        return {
+            x: x,
+            y: y,
+            size: size,
+            radius: radii[size],
+            color: colors[size],
+            vx: vx,
+            vy: vy,
+            gravity: 0.15
+        };
+    }
+
+    // パーティクル（破砕エフェクト）
+    function createPopParticles(x, y, color) {
+        for (let i = 0; i < 12; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 4 + 1;
+            particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                radius: Math.random() * 3 + 1,
+                color: color,
+                life: 1.0
+            });
+        }
+    }
+
+    // メインループ
+    function gameLoop() {
+        update();
+        draw();
+
+        if (!isGameOver) {
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+    }
+
+    function update() {
+        // --- プレイヤー移動 ---
+        if (keys.left) player.x -= player.speed;
+        if (keys.right) player.x += player.speed;
+
+        // 壁判定
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+        // --- 攻撃（モリ発射） ---
+        if (keys.fire && !harpoon) {
+            harpoon = {
+                x: player.x + player.width / 2,
+                y: player.y,
+                speed: 7
+            };
+            playSound('shoot');
+        }
+
+        // モリの移動
+        if (harpoon) {
+            harpoon.y -= harpoon.speed;
+            if (harpoon.y <= 0) {
+                harpoon = null; // 天井に届いたら消失
+            }
+        }
+
+        // --- ボール更新 ---
+        for (let i = balls.length - 1; i >= 0; i--) {
+            const b = balls[i];
+
+            // 物理演算
+            b.vy += b.gravity;
+            b.x += b.vx;
+            b.y += b.vy;
+
+            // 左右の壁反射
+            if (b.x - b.radius < 0) {
+                b.x = b.radius;
+                b.vx *= -1;
+            } else if (b.x + b.radius > canvas.width) {
+                b.x = canvas.width - b.radius;
+                b.vx *= -1;
+            }
+
+            // 床反射（跳ね返り高さ調整）
+            const bounceHeights = [-5.5, -6.5, -7.5, -8.5];
+            if (b.y + b.radius > canvas.height) {
+                b.y = canvas.height - b.radius;
+                b.vy = bounceHeights[b.size];
+            }
+
+            // 天井反射
+            if (b.y - b.radius < 0) {
+                b.y = b.radius;
+                b.vy *= -1;
+            }
+
+            // --- モリとの当たり判定 ---
+            if (harpoon) {
+                // モリの線分と円の判定
+                const hit = (
+                    Math.abs(b.x - harpoon.x) < b.radius + 2 &&
+                    b.y + b.radius >= harpoon.y &&
+                    b.y - b.radius <= player.y
+                );
+
+                if (hit) {
+                    playSound('pop');
+                    createPopParticles(b.x, b.y, b.color);
+                    score += (4 - b.size) * 100;
+                    currentScoreEl.innerText = score;
+
+                    // ボールの分裂
+                    if (b.size > 0) {
+                        const newSize = b.size - 1;
+                        const vx1 = Math.abs(b.vx) * 1.1;
+                        balls.push(createBall(b.x, b.y, newSize, vx1, -3));
+                        balls.push(createBall(b.x, b.y, newSize, -vx1, -3));
+                    }
+
+                    balls.splice(i, 1);
+                    harpoon = null;
+                    continue;
+                }
+            }
+
+            // --- プレイヤーとの当たり判定（死亡判定） ---
+            const closestX = Math.max(player.x, Math.min(b.x, player.x + player.width));
+            const closestY = Math.max(player.y, Math.min(b.y, player.y + player.height));
+            const distanceX = b.x - closestX;
+            const distanceY = b.y - closestY;
+            const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+
+            if (distanceSquared < (b.radius * b.radius)) {
+                handlePlayerHit();
+                return;
+            }
+        }
+
+        // --- パーティクル更新 ---
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.04;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        // --- ステージクリア判定 ---
+        if (balls.length === 0 && !isGameOver) {
+            endGame(true);
+        }
+    }
+
+    // プレイヤー被弾処理
+    function handlePlayerHit() {
+        playSound('hit');
+        lives--;
+        updateLivesDisplay();
+
+        if (lives <= 0) {
+            endGame(false);
+        } else {
+            // 一時停止＆画面フラッシュ後リスタート
+            flashMark.innerText = "💔";
+            flashText.innerText = "ぶつかった！";
+            flashText.style.color = "#ff4757";
+            flashOverlay.classList.add('active');
+
+            isGameOver = true;
+            setTimeout(() => {
+                flashOverlay.classList.remove('active');
+                player.x = canvas.width / 2 - player.width / 2;
+                harpoon = null;
+                isGameOver = false;
+                gameLoop();
+            }, 1000);
+        }
+    }
+
+    function draw() {
+        // 背景クリア
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 背景の装飾ライン
+        ctx.strokeStyle = "#334155";
+        ctx.lineWidth = 1;
+        for (let i = 0; i < canvas.height; i += 30) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(canvas.width, i);
+            ctx.stroke();
+        }
+
+        // --- モリ（ロープ）の描画 ---
+        if (harpoon) {
+            ctx.strokeStyle = "#ff9f43";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(harpoon.x, player.y);
+            ctx.lineTo(harpoon.x, harpoon.y);
+            ctx.stroke();
+
+            // 銛の先端
+            ctx.fillStyle = "#e67e22";
+            ctx.beginPath();
+            ctx.moveTo(harpoon.x - 5, harpoon.y + 6);
+            ctx.lineTo(harpoon.x, harpoon.y);
+            ctx.lineTo(harpoon.x + 5, harpoon.y + 6);
+            ctx.fill();
+        }
+
+        // --- プレイヤーの描画 ---
+        ctx.fillStyle = "#38bdf8";
+        // 体
+        ctx.beginPath();
+        ctx.roundRect(player.x, player.y, player.width, player.height, 6);
+        ctx.fill();
+
+        // 顔（帽子風）
+        ctx.fillStyle = "#f43f5e";
+        ctx.fillRect(player.x, player.y, player.width, 6);
+
+        // 目
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(player.x + 4, player.y + 8, 4, 5);
+        ctx.fillRect(player.x + 12, player.y + 8, 4, 5);
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(player.x + 6, player.y + 10, 2, 3);
+        ctx.fillRect(player.x + 14, player.y + 10, 2, 3);
+
+        // --- ボールの描画 ---
+        balls.forEach(b => {
+            ctx.fillStyle = b.color;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ハイライト（光沢）
+            ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+            ctx.beginPath();
+            ctx.arc(b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // --- パーティクルの描画 ---
+        particles.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        });
+    }
+
+    function endGame(isClear) {
+        isGameOver = true;
+        const endTime = performance.now();
+        const duration = Math.floor((endTime - startTime) / 1000);
+
+        flashMark.innerText = isClear ? "🎉" : "💥";
+        flashText.innerText = isClear ? "ステージクリア！" : "ゲームオーバー";
+        flashText.style.color = isClear ? "#2ed573" : "#ff4757";
+        flashOverlay.classList.add('active');
+
+        setTimeout(() => {
+            flashOverlay.classList.remove('active');
+            playScreen.style.display = 'none';
+            resultScreen.style.display = 'flex';
+
+            resultTitleEl.innerText = isClear ? "🎉 ステージクリア！" : "💀 ゲームオーバー";
+            finalScoreValEl.innerText = `${score} 点`;
+            finalTimeEl.innerText = `${duration}秒`;
+        }, 1200);
+    }
+
+    // --- コントローラーイベントセットアップ ---
+    function bindControl(elementId, keyName) {
+        const btn = document.getElementById(elementId);
+        const start = (e) => {
+            e.preventDefault();
+            keys[keyName] = true;
+            btn.classList.add('pressed');
+        };
+        const end = (e) => {
+            e.preventDefault();
+            keys[keyName] = false;
+            btn.classList.remove('pressed');
+        };
+
+        btn.addEventListener('touchstart', start, { passive: false });
+        btn.addEventListener('touchend', end, { passive: false });
+        btn.addEventListener('mousedown', start);
+        btn.addEventListener('mouseup', end);
+        btn.addEventListener('mouseleave', end);
+    }
+
+    bindControl('btn-left', 'left');
+    bindControl('btn-right', 'right');
+    bindControl('btn-fire', 'fire');
+
+    // キーボード操作対応
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+        if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+        if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') keys.fire = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+        if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+        if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') keys.fire = false;
+    });
+</script>
+
+</body>
+</html>
